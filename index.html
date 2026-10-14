@@ -43,9 +43,25 @@
 
             <div class="section-box" style="padding: 22px 18px; margin-bottom: 20px; border-radius: var(--radius-md); background: #ffffff; border: 1px solid var(--border-color); box-shadow: 0 4px 16px rgba(15, 23, 42, 0.05);">
                 <form id="lockForm" onsubmit="event.preventDefault(); attemptUnlock();">
-                    <div style="margin-bottom: 18px;">
+                    <div style="margin-bottom: 18px; position: relative;">
                         <label for="lockPasscode" style="display: block; font-size: 0.8rem; font-weight: 700; color: var(--text-primary); margin-bottom: 8px;">رمز عبور / پین سازمانی</label>
-                        <input type="password" id="lockPasscode" class="search-input" placeholder="رمز عبور را وارد نمایید..." autocomplete="current-password" style="padding: 12px 14px; font-size: 0.95rem; text-align: center; letter-spacing: 2px;" required autofocus>
+                        
+                        <input type="password" id="lockPasscode" class="search-input" placeholder="رمز عبور را وارد نمایید..." autocomplete="current-password" style="padding: 12px 40px; font-size: 0.95rem; text-align: center; letter-spacing: 2px; width: 100%; box-sizing: border-box;" required autofocus>
+                        
+                        <button type="button" onclick="const input = document.getElementById('lockPasscode'); const eye = document.getElementById('eyeIcon'); const eyeOff = document.getElementById('eyeOffIcon'); if(input.type === 'password') { input.type = 'text'; eye.style.display = 'none'; eyeOff.style.display = 'block'; } else { input.type = 'password'; eye.style.display = 'block'; eyeOff.style.display = 'none'; }" style="position: absolute; left: 12px; bottom: 11px; background: transparent; border: none; color: #94a3b8; cursor: pointer; padding: 0; display: flex; align-items: center; justify-content: center; outline: none;">
+                            
+                            <!-- Open Eye Icon (Default) -->
+                            <svg id="eyeIcon" viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: block;">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+
+                            <!-- Closed/Slashed Eye Icon (Hidden by default) -->
+                            <svg id="eyeOffIcon" viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
+                                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                                <line x1="1" y1="1" x2="23" y2="23"></line>
+                            </svg>
+                        </button>
                     </div>
                     
                     <button type="submit" id="btnUnlock" class="ctrl-btn flip" style="width: 100%; padding: 12px; font-size: 0.88rem; font-weight: 800; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer;">
