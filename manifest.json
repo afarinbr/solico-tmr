@@ -1,0 +1,21 @@
+{
+  "name": "Solico TMR Product Learning",
+  "short_name": "TMR Learning",
+  "description": "Interactive product learning application for Solico and Kalle TMR teams.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#ffffff",
+  "theme_color": "#0f766e",
+  "lang": "en",
+  "dir": "ltr",
+  "icons": [
+    {
+      "src": "./assets/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

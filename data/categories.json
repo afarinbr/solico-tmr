@@ -1,0 +1,207 @@
+[
+    {
+        "category_id":  "1",
+        "category_name":  "پنیر",
+        "business":  "لبنیات"
+    },
+    {
+        "category_id":  "2",
+        "category_name":  "آژیل",
+        "business":  "لبنیات"
+    },
+    {
+        "category_id":  "3",
+        "category_name":  "دسر",
+        "business":  "لبنیات"
+    },
+    {
+        "category_id":  "4",
+        "category_name":  "چربی",
+        "business":  "لبنیات"
+    },
+    {
+        "category_id":  "5",
+        "category_name":  "کاطلا",
+        "business":  "لبنیات"
+    },
+    {
+        "category_id":  "6",
+        "category_name":  "شیر",
+        "business":  "لبنیات"
+    },
+    {
+        "category_id":  "7",
+        "category_name":  "ماست",
+        "business":  "لبنیات"
+    },
+    {
+        "category_id":  "8",
+        "category_name":  "CSD_CRB",
+        "business":  "نوشیدنی"
+    },
+    {
+        "category_id":  "9",
+        "category_name":  "دوغ",
+        "business":  "نوشیدنی"
+    },
+    {
+        "category_id":  "10",
+        "category_name":  "انرژی زا",
+        "business":  "نوشیدنی"
+    },
+    {
+        "category_id":  "11",
+        "category_name":  "آبمیوه",
+        "business":  "نوشیدنی"
+    },
+    {
+        "category_id":  "12",
+        "category_name":  "مالت",
+        "business":  "نوشیدنی"
+    },
+    {
+        "category_id":  "13",
+        "category_name":  "آب",
+        "business":  "نوشیدنی"
+    },
+    {
+        "category_id":  "14",
+        "category_name":  "بار",
+        "business":  "قنادی"
+    },
+    {
+        "category_id":  "15",
+        "category_name":  "شکلات",
+        "business":  "قنادی"
+    },
+    {
+        "category_id":  "16",
+        "category_name":  "کرم قنادی",
+        "business":  "قنادی"
+    },
+    {
+        "category_id":  "17",
+        "category_name":  "آردی قنادی",
+        "business":  "قنادی"
+    },
+    {
+        "category_id":  "18",
+        "category_name":  "پایه آبی",
+        "business":  "قنادی"
+    },
+    {
+        "category_id":  "19",
+        "category_name":  "گوشتی کاپو",
+        "business":  "کاپو"
+    },
+    {
+        "category_id":  "20",
+        "category_name":  "پیتزا",
+        "business":  "کاپو"
+    },
+    {
+        "category_id":  "21",
+        "category_name":  "اسنک و دیپ",
+        "business":  "کاپو"
+    },
+    {
+        "category_id":  "22",
+        "category_name":  "غذای آماده",
+        "business":  "کاپو"
+    },
+    {
+        "category_id":  "23",
+        "category_name":  "تغذیه کودک",
+        "business":  "سلامت"
+    },
+    {
+        "category_id":  "24",
+        "category_name":  "سلینو",
+        "business":  "سلامت"
+    },
+    {
+        "category_id":  "25",
+        "category_name":  "قهوه",
+        "business":  "سلامت"
+    },
+    {
+        "category_id":  "26",
+        "category_name":  "کاله پرو",
+        "business":  "سلامت"
+    },
+    {
+        "category_id":  "27",
+        "category_name":  "فله",
+        "business":  "بستنی"
+    },
+    {
+        "category_id":  "28",
+        "category_name":  "اقتصادی",
+        "business":  "بستنی"
+    },
+    {
+        "category_id":  "29",
+        "category_name":  "کیک دسر انجمادی",
+        "business":  "بستنی"
+    },
+    {
+        "category_id":  "30",
+        "category_name":  "پریمیوم",
+        "business":  "بستنی"
+    },
+    {
+        "category_id":  "31",
+        "category_name":  "کنتاکی",
+        "business":  "غذای آماده"
+    },
+    {
+        "category_id":  "32",
+        "category_name":  "برگر و بیف",
+        "business":  "غذای آماده"
+    },
+    {
+        "category_id":  "33",
+        "category_name":  "مرغ",
+        "business":  "غذای آماده"
+    },
+    {
+        "category_id":  "34",
+        "category_name":  "دونر",
+        "business":  "غذای آماده"
+    },
+    {
+        "category_id":  "35",
+        "category_name":  "سیب زمینی",
+        "business":  "غذای آماده"
+    },
+    {
+        "category_id":  "36",
+        "category_name":  "سس",
+        "business":  "غذای آماده"
+    },
+    {
+        "category_id":  "37",
+        "category_name":  "سوسیس و بلونیا",
+        "business":  "غذای آماده"
+    },
+    {
+        "category_id":  "38",
+        "category_name":  "غذای دریایی",
+        "business":  "غذای آماده"
+    },
+    {
+        "category_id":  "39",
+        "category_name":  "فینگر فود و اسنک",
+        "business":  "غذای آماده"
+    },
+    {
+        "category_id":  "40",
+        "category_name":  "سبزیجات",
+        "business":  "غذای آماده"
+    },
+    {
+        "category_id":  "41",
+        "category_name":  "لبنیات عمومی",
+        "business":  "لبنیات"
+    }
+]
