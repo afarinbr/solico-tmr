@@ -40,10 +40,13 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Network-first for data files so CSV/JSON/ENC updates show immediately.
+  // Network-first for HTML and data files so updates show immediately online.
   const url = new URL(event.request.url);
   if (url.pathname.endsWith('/data/products.enc') ||
-      url.pathname.endsWith('/data/categories.json')) {
+      url.pathname.endsWith('/data/categories.json') ||
+      url.pathname.endsWith('/index.html') ||
+      url.pathname === '/' ||
+      url.pathname.endsWith('/')) {
     event.respondWith(
       fetch(event.request)
         .then((networkResponse) => {

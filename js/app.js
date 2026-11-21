@@ -431,6 +431,7 @@ async function attemptUnlock() {
         loadSavedState();
         updateFavBadge();
         openHome();
+        flushPendingReports();
 
         console.log('✅ [Solico Vault] Application unlocked successfully.');
     } catch (err) {
@@ -861,6 +862,9 @@ function renderList() {
                     </div>
                 </div>
                 <div class="product-list-actions">
+                    <button class="btn-list-report" title="گزارش اصلاح این محصول" onclick="event.stopPropagation(); openReportModalForProduct(${idx})">
+                        🚩
+                    </button>
                     <button class="btn-list-like ${isFav ? 'liked' : ''}" title="${isFav ? 'حذف از علاقه‌مندی‌ها' : 'افزودن به علاقه‌مندی‌ها'}" onclick="event.stopPropagation(); toggleFavById('${p.id}')">
                         ${isFav ? '❤️' : '🤍'}
                     </button>
@@ -1021,7 +1025,871 @@ function handleSearch(query) {
     }
 }
 
+/* ==========================================================================
+   Product Issue Reporting & Replacement Suggestion Subsystem
+   ========================================================================== */
+
+// Configurable Webhook URL for Google Sheets / Google Apps Script
+const REPORT_WEBHOOK_URL = window.SOLICO_REPORT_WEBHOOK_URL || 'https://script.google.com/macros/s/AKfycbw9_placeholder/exec';
+const PENDING_REPORTS_KEY = 'solico_tmr_pending_reports';
+
+let activeReportProduct = null;
+let selectedIssues = new Set();
+let isReportModalOpen = false;
+let currentReportImage = {
+    hasImage: false,
+    mimeType: '',
+    filename: '',
+    base64Data: '',
+    dataUrl: ''
+};
+
+/**
+ * Toast Notification System
+ */
+function showToast(message, type = 'info', duration = 3500) {
+    const container = document.getElementById('appToastContainer');
+    if (!container) return;
+
+    const toast = document.createElement('div');
+    toast.className = `app-toast ${type}`;
+    
+    let icon = 'ℹ️';
+    if (type === 'success') icon = '✅';
+    if (type === 'warning') icon = '⚠️';
+    if (type === 'error') icon = '❌';
+
+    toast.innerHTML = `<span style="font-size:1.1rem; line-height:1;">${icon}</span><span>${message}</span>`;
+    container.appendChild(toast);
+
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(10px)';
+        toast.style.transition = '0.3s ease';
+        setTimeout(() => toast.remove(), 300);
+    }, duration);
+}
+
+/**
+ * Opens report modal for a product at specific index in currentProducts.
+ */
+function openReportModalForProduct(index) {
+    if (index >= 0 && index < currentProducts.length) {
+        currentIndex = index;
+        openReportModal(currentProducts[index]);
+    }
+}
+
+/**
+ * Opens the RTL Bottom-Sheet Modal and populates auto-detected product context.
+ */
+function openReportModal(product = null) {
+    const p = product || (currentProducts && currentProducts[currentIndex]);
+    if (!p) {
+        showToast('محصولی برای گزارش انتخاب نشده است.', 'warning');
+        return;
+    }
+
+    activeReportProduct = p;
+    isReportModalOpen = true;
+
+    // Apply product BU theme to sheet if applicable
+    if (p.business) {
+        applyTheme(p.business);
+    }
+
+    // 1. Populate auto-detected product banner
+    const fallbackSvg = `data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'60\' height=\'60\'><text x=\'50%\' y=\'50%\' font-size=\'10\' text-anchor=\'middle\' fill=\'%23888\'>بدون تصویر</text></svg>`;
+    const bannerThumb = document.getElementById('repBannerThumb');
+    const bannerTitle = document.getElementById('repBannerTitle');
+    const bannerSku = document.getElementById('repBannerSku');
+    const bannerCat = document.getElementById('repBannerCategory');
+
+    if (bannerThumb) bannerThumb.src = p.image || fallbackSvg;
+    if (bannerTitle) bannerTitle.innerText = p.title || p.product_name_raw || 'بدون نام';
+    if (bannerSku) bannerSku.innerText = `SKU: ${p.sku || 'نامشخص'}`;
+    if (bannerCat) bannerCat.innerText = `${p.business || '-'} › ${p.category_name || '-'}`;
+
+    // 2. Reset Issue Selection State
+    selectedIssues.clear();
+    document.querySelectorAll('.rep-issue-chip').forEach(chip => chip.classList.remove('active'));
+
+    // 3. Reset Subforms visibility
+    updateSubformsVisibility();
+
+    // 4. Pre-fill & Pre-reveal current values in all subforms
+    populateCategorySubform(p);
+    populateImageSubform(p);
+    populateBasicInfoSubform(p);
+    populateNutritionSubform(p);
+    populateSalesPitchSubform(p);
+    populateTmrOpsSubform(p);
+    populateNegotiationSubform(p);
+    populateDiscontinuedSubform(p);
+
+    // Reset General description
+    const problemInput = document.getElementById('repProblemText');
+    if (problemInput) problemInput.value = '';
+
+    // Reset submit button state
+    setSubmitButtonState('idle');
+
+    // 5. Open Bottom Sheet
+    const overlay = document.getElementById('reportModalOverlay');
+    const sheet = document.getElementById('reportSheet');
+    if (overlay && sheet) {
+        overlay.classList.add('active');
+        sheet.classList.add('open');
+        document.body.style.overflow = 'hidden';
+    }
+
+    // Attempt to flush any offline pending reports in background
+    flushPendingReports();
+}
+
+/**
+ * Closes the Bottom-Sheet Modal.
+ */
+function closeReportModal() {
+    const overlay = document.getElementById('reportModalOverlay');
+    const sheet = document.getElementById('reportSheet');
+    if (overlay && sheet) {
+        overlay.classList.remove('active');
+        sheet.classList.remove('open');
+        document.body.style.overflow = '';
+    }
+    isReportModalOpen = false;
+    activeReportProduct = null;
+    removeReportImage();
+}
+
+function handleReportOverlayClick(e) {
+    if (e.target && e.target.id === 'reportModalOverlay') {
+        closeReportModal();
+    }
+}
+
+/**
+ * Toggles an issue type chip.
+ */
+function toggleIssueType(issueType) {
+    const chip = document.querySelector(`.rep-issue-chip[data-issue="${issueType}"]`);
+    if (selectedIssues.has(issueType)) {
+        selectedIssues.delete(issueType);
+        if (chip) chip.classList.remove('active');
+    } else {
+        selectedIssues.add(issueType);
+        if (chip) chip.classList.add('active');
+    }
+    updateSubformsVisibility();
+}
+
+/**
+ * Updates visibility of Step 2 subforms based on active selected issues.
+ */
+function updateSubformsVisibility() {
+    const allIssueKeys = [
+        'WRONG_CATEGORY',
+        'WRONG_IMAGE',
+        'WRONG_BASIC_INFO',
+        'WRONG_NUTRITION',
+        'WRONG_SALES_PITCH',
+        'WRONG_TMR_OPS',
+        'WRONG_NEGOTIATION',
+        'DISCONTINUED_OR_OTHER'
+    ];
+
+    const emptyHint = document.getElementById('repEmptyHint');
+    if (emptyHint) {
+        emptyHint.style.display = selectedIssues.size === 0 ? 'block' : 'none';
+    }
+
+    allIssueKeys.forEach(key => {
+        const subform = document.getElementById(`subform_${key}`);
+        if (subform) {
+            subform.style.display = selectedIssues.has(key) ? 'block' : 'none';
+        }
+    });
+}
+
+/**
+ * Subform 1: Populate Category & Cascading Dropdowns
+ */
+function populateCategorySubform(p) {
+    const curCatDisplay = document.getElementById('repCurCatDisplay');
+    const buSelect = document.getElementById('repSelectBU');
+    const catSelect = document.getElementById('repSelectCategory');
+    const customWrap = document.getElementById('repCustomCategoryWrap');
+    const customInput = document.getElementById('repCustomCategoryInput');
+
+    if (curCatDisplay) {
+        curCatDisplay.innerText = `${p.business || 'نامشخص'} › ${p.category_name || 'نامشخص'} (شناسه: ${p.category_id || '-'})`;
+    }
+
+    if (!buSelect || !catSelect) return;
+
+    // Populate BUs
+    buSelect.innerHTML = `
+        <option value="">-- انتخاب واحد تجاری صحیح --</option>
+        ${BUSINESS_LIST.map(b => `<option value="${b.name}">${b.icon} ${b.name}</option>`).join('')}
+        <option value="OTHER">سایر / گروه جدید (Other)</option>
+    `;
+
+    if (p.business) {
+        buSelect.value = p.business;
+    }
+
+    function syncCategories() {
+        const selectedBU = buSelect.value;
+        if (selectedBU === 'OTHER') {
+            catSelect.innerHTML = `<option value="OTHER">سایر / دسته‌بندی جدید (Other)</option>`;
+            catSelect.value = 'OTHER';
+            if (customWrap) customWrap.style.display = 'block';
+            return;
+        }
+
+        const categoriesInBU = (rawCategoryMap || []).filter(c => c.business === selectedBU);
+        catSelect.innerHTML = `
+            <option value="">-- انتخاب دسته‌بندی صحیح --</option>
+            ${categoriesInBU.map(c => `<option value="${c.category_id}" data-name="${c.category_name}">${c.category_name}</option>`).join('')}
+            <option value="OTHER">سایر / دسته‌بندی جدید (Other)</option>
+        `;
+
+        if (p.business === selectedBU && p.category_id) {
+            catSelect.value = String(p.category_id);
+        }
+
+        checkCustomField();
+    }
+
+    function checkCustomField() {
+        if (!customWrap) return;
+        if (buSelect.value === 'OTHER' || catSelect.value === 'OTHER') {
+            customWrap.style.display = 'block';
+        } else {
+            customWrap.style.display = 'none';
+        }
+    }
+
+    buSelect.onchange = syncCategories;
+    catSelect.onchange = checkCustomField;
+
+    syncCategories();
+    if (customInput) customInput.value = '';
+}
+
+/**
+ * Subform 2: Populate Image Preview & Upload Logic
+ */
+function populateImageSubform(p) {
+    const curImg = document.getElementById('repCurImgPreview');
+    const fallbackSvg = `data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'60\' height=\'60\'><text x=\'50%\' y=\'50%\' font-size=\'10\' text-anchor=\'middle\' fill=\'%23888\'>بدون تصویر</text></svg>`;
+    if (curImg) curImg.src = p.image || fallbackSvg;
+    removeReportImage();
+}
+
+/**
+ * Client-Side Image Compression using HTML5 Canvas
+ * Resizes max 800x800, JPEG quality 0.75, lightweight <150KB
+ */
+function compressImageFile(file, maxWidth = 800, maxHeight = 800, quality = 0.75) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (readerEvent) => {
+            const img = new Image();
+            img.onload = () => {
+                let width = img.width;
+                let height = img.height;
+
+                if (width > maxWidth || height > maxHeight) {
+                    if (width / height > maxWidth / maxHeight) {
+                        height = Math.round((height * maxWidth) / width);
+                        width = maxWidth;
+                    } else {
+                        width = Math.round((width * maxHeight) / height);
+                        height = maxHeight;
+                    }
+                }
+
+                const canvas = document.createElement('canvas');
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+
+                const dataUrl = canvas.toDataURL('image/jpeg', quality);
+                const base64Data = dataUrl.replace(/^data:image\/jpeg;base64,/, '');
+
+                resolve({
+                    dataUrl,
+                    base64Data,
+                    mimeType: 'image/jpeg',
+                    width,
+                    height,
+                    approxSizeKb: Math.round(base64Data.length * 0.75 / 1024)
+                });
+            };
+            img.onerror = () => reject(new Error('امکان بارگذاری تصویر وجود ندارد.'));
+            img.src = readerEvent.target.result;
+        };
+        reader.onerror = () => reject(new Error('امکان خواندن فایل وجود ندارد.'));
+        reader.readAsDataURL(file);
+    });
+}
+
+async function handleReportImageSelect(event) {
+    const file = event.target.files && event.target.files[0];
+    if (!file) return;
+
+    try {
+        showToast('در حال بهینه‌سازی و فشرده‌سازی تصویر...', 'info', 2000);
+        const compressed = await compressImageFile(file);
+
+        currentReportImage = {
+            hasImage: true,
+            mimeType: compressed.mimeType,
+            filename: `product_${activeReportProduct ? activeReportProduct.id : 'unknown'}_replacement.jpg`,
+            base64Data: compressed.base64Data,
+            dataUrl: compressed.dataUrl
+        };
+
+        const previewImg = document.getElementById('repNewImgPreview');
+        const uploadPrompt = document.getElementById('repUploadPrompt');
+        const previewWrap = document.getElementById('repUploadPreviewWrap');
+
+        if (previewImg) previewImg.src = compressed.dataUrl;
+        if (uploadPrompt) uploadPrompt.style.display = 'none';
+        if (previewWrap) previewWrap.style.display = 'flex';
+
+        showToast(`تصویر با موفقیت بارگذاری شد (${compressed.approxSizeKb} KB)`, 'success', 2500);
+    } catch (err) {
+        showToast(`خطا در بارگذاری تصویر: ${err.message}`, 'error');
+        removeReportImage();
+    }
+}
+
+function removeReportImage() {
+    currentReportImage = {
+        hasImage: false,
+        mimeType: '',
+        filename: '',
+        base64Data: '',
+        dataUrl: ''
+    };
+    const fileInput = document.getElementById('repImageFileInput');
+    if (fileInput) fileInput.value = '';
+    const uploadPrompt = document.getElementById('repUploadPrompt');
+    const previewWrap = document.getElementById('repUploadPreviewWrap');
+    if (uploadPrompt) uploadPrompt.style.display = 'flex';
+    if (previewWrap) previewWrap.style.display = 'none';
+}
+
+/**
+ * Subform 3: Populate Basic Info
+ */
+function populateBasicInfoSubform(p) {
+    const curTitle = document.getElementById('repCurTitleBadge');
+    const curWeights = document.getElementById('repCurWeightsBadge');
+    const curSku = document.getElementById('repCurSkuBadge');
+
+    if (curTitle) curTitle.innerText = p.title || p.product_name_raw || '-';
+    if (curWeights) curWeights.innerText = p.weights || '-';
+    if (curSku) curSku.innerText = p.sku || '-';
+
+    const inTitle = document.getElementById('repInputTitle');
+    const inWeights = document.getElementById('repInputWeights');
+    const inSku = document.getElementById('repInputSku');
+
+    if (inTitle) inTitle.value = '';
+    if (inWeights) inWeights.value = '';
+    if (inSku) inSku.value = '';
+}
+
+/**
+ * Subform 4: Populate Nutrition & Ingredients
+ */
+function populateNutritionSubform(p) {
+    const setCur = (id, val) => {
+        const el = document.getElementById(id);
+        if (el) el.innerText = `(${val || '-'})`;
+    };
+
+    setCur('repCurEnergy', p.energy);
+    setCur('repCurProtein', p.protein ? `${p.protein}g` : '-');
+    setCur('repCurFat', p.fat ? `${p.fat}g` : '-');
+    setCur('repCurSugar', p.sugar ? `${p.sugar}g` : '-');
+    setCur('repCurSalt', p.salt ? `${p.salt}g` : '-');
+    setCur('repCurShelfLife', p.shelf_life);
+
+    const curIng = document.getElementById('repCurIngredientsBadge');
+    if (curIng) curIng.innerText = p.ingredients || '-';
+
+    ['Energy', 'Protein', 'Fat', 'Sugar', 'Salt', 'ShelfLife'].forEach(key => {
+        const input = document.getElementById(`repInput${key}`);
+        if (input) input.value = '';
+    });
+
+    const inIng = document.getElementById('repInputIngredients');
+    if (inIng) inIng.value = '';
+}
+
+/**
+ * Subform 5: Populate Sales Pitch (Slogan, Claims, Targets)
+ */
+function populateSalesPitchSubform(p) {
+    const curSlogan = document.getElementById('repCurSloganBadge');
+    if (curSlogan) curSlogan.innerText = p.slogan || '-';
+
+    const inSlogan = document.getElementById('repInputSlogan');
+    const inClaims = document.getElementById('repInputClaims');
+    const inTargets = document.getElementById('repInputTargets');
+
+    if (inSlogan) inSlogan.value = '';
+    if (inClaims) inClaims.value = Array.isArray(p.claims) ? p.claims.join(' | ') : (p.claims || '');
+    if (inTargets) inTargets.value = Array.isArray(p.targets) ? p.targets.join(' | ') : (p.targets || '');
+}
+
+/**
+ * Subform 6: Populate TMR Operations (Tips, Sampling, Plano)
+ */
+function populateTmrOpsSubform(p) {
+    const inTips = document.getElementById('repInputTips');
+    const inSampling = document.getElementById('repInputSampling');
+    const inPlano = document.getElementById('repInputPlano');
+
+    if (inTips) inTips.value = Array.isArray(p.tips) ? p.tips.join(' | ') : (p.tips || '');
+    if (inSampling) inSampling.value = Array.isArray(p.sampling) ? p.sampling.join(' | ') : (p.sampling || '');
+    if (inPlano) inPlano.value = Array.isArray(p.plano) ? p.plano.join(' | ') : (p.plano || '');
+}
+
+/**
+ * Subform 7: Populate Negotiation & Competitor
+ */
+function populateNegotiationSubform(p) {
+    const inComp = document.getElementById('repInputCompetitor');
+    const inNeg = document.getElementById('repInputNegotiation');
+
+    if (inComp) inComp.value = p.competitor || '';
+    if (inNeg) {
+        if (Array.isArray(p.negotiation)) {
+            inNeg.value = p.negotiation.join(' | ');
+        } else {
+            inNeg.value = p.negotiation || '';
+        }
+    }
+}
+
+/**
+ * Subform 8: Populate Discontinued & Other
+ */
+function populateDiscontinuedSubform(p) {
+    const chk = document.getElementById('repCheckDiscontinued');
+    const notes = document.getElementById('repInputOtherNotes');
+    if (chk) chk.checked = false;
+    if (notes) notes.value = '';
+}
+
+/**
+ * Helper to split text by pipe or newline and rejoin with standard pipe format
+ */
+function formatPipeString(text) {
+    if (!text) return '';
+    return text.split(/[\r\n|]+/)
+        .map(s => s.trim())
+        .filter(Boolean)
+        .join(' | ');
+}
+
+/**
+ * Assembles the full, structured JSON payload matching the target specification.
+ */
+function buildReportPayload() {
+    const p = activeReportProduct;
+    if (!p) return null;
+
+    const problemText = (document.getElementById('repProblemText')?.value || '').trim();
+    const issueTypes = Array.from(selectedIssues);
+
+    const payload = {
+        report_id: `REP-${Date.now()}-${p.id || '0'}`,
+        timestamp: new Date().toISOString(),
+        status: 'PENDING',
+        product_id: Number(p.id) || p.id,
+        sku: p.sku || '',
+        product_name_raw: p.title || p.product_name_raw || '',
+        current_business_unit: p.business || '',
+        current_category_id: Number(p.category_id) || (p.category_id !== undefined ? p.category_id : null),
+        current_category_name: p.category_name || '',
+        issue_types: issueTypes,
+        problem_text: problemText,
+        target_csv_columns: [],
+        current_values_json: {},
+        suggested_replacements_json: {},
+        image_replacement: {
+            has_image: currentReportImage.hasImage,
+            mime_type: currentReportImage.mimeType,
+            filename: currentReportImage.filename,
+            base64_data: currentReportImage.base64Data
+        }
+    };
+
+    // 1. Process WRONG_CATEGORY
+    if (selectedIssues.has('WRONG_CATEGORY')) {
+        const buSelect = document.getElementById('repSelectBU');
+        const catSelect = document.getElementById('repSelectCategory');
+        const customCat = (document.getElementById('repCustomCategoryInput')?.value || '').trim();
+        const selBU = buSelect?.value || '';
+        const selCatVal = catSelect?.value || '';
+        const selCatOption = catSelect?.selectedOptions ? catSelect.selectedOptions[0] : null;
+        const selCatName = selCatOption ? selCatOption.getAttribute('data-name') || selCatVal : '';
+
+        payload.target_csv_columns.push('category_id');
+        payload.current_values_json['category_id'] = p.category_id;
+        payload.current_values_json['business_unit'] = p.business;
+
+        payload.suggested_replacements_json['business_unit'] = selBU;
+        payload.suggested_replacements_json['category_id'] = (selCatVal && selCatVal !== 'OTHER') ? (Number(selCatVal) || selCatVal) : 'OTHER';
+        payload.suggested_replacements_json['category_name'] = selCatName;
+        payload.suggested_replacements_json['custom_category_other'] = customCat;
+    }
+
+    // 2. Process WRONG_IMAGE
+    if (selectedIssues.has('WRONG_IMAGE') && currentReportImage.hasImage) {
+        payload.target_csv_columns.push('image_urls');
+        payload.current_values_json['image_urls'] = p.image || '';
+    }
+
+    // 3. Process WRONG_BASIC_INFO
+    if (selectedIssues.has('WRONG_BASIC_INFO')) {
+        const inTitle = (document.getElementById('repInputTitle')?.value || '').trim();
+        const inWeights = (document.getElementById('repInputWeights')?.value || '').trim();
+        const inSku = (document.getElementById('repInputSku')?.value || '').trim();
+
+        if (inTitle) {
+            payload.target_csv_columns.push('product_name_raw');
+            payload.current_values_json['product_name_raw'] = p.title || p.product_name_raw;
+            payload.suggested_replacements_json['product_name_raw'] = inTitle;
+        }
+        if (inWeights) {
+            payload.target_csv_columns.push('weights');
+            payload.current_values_json['weights'] = p.weights;
+            payload.suggested_replacements_json['weights'] = inWeights;
+        }
+        if (inSku) {
+            payload.target_csv_columns.push('sku');
+            payload.current_values_json['sku'] = p.sku;
+            payload.suggested_replacements_json['sku'] = inSku;
+        }
+    }
+
+    // 4. Process WRONG_NUTRITION
+    if (selectedIssues.has('WRONG_NUTRITION')) {
+        const nutriMap = [
+            { col: 'energy', id: 'repInputEnergy' },
+            { col: 'protein', id: 'repInputProtein' },
+            { col: 'fat', id: 'repInputFat' },
+            { col: 'sugar', id: 'repInputSugar' },
+            { col: 'salt', id: 'repInputSalt' },
+            { col: 'shelf_life', id: 'repInputShelfLife' }
+        ];
+
+        nutriMap.forEach(({ col, id }) => {
+            const val = (document.getElementById(id)?.value || '').trim();
+            if (val) {
+                payload.target_csv_columns.push(col);
+                payload.current_values_json[col] = p[col] || '';
+                payload.suggested_replacements_json[col] = val;
+            }
+        });
+
+        const inIng = (document.getElementById('repInputIngredients')?.value || '').trim();
+        if (inIng) {
+            payload.target_csv_columns.push('ingredients');
+            payload.current_values_json['ingredients'] = p.ingredients || '';
+            payload.suggested_replacements_json['ingredients'] = inIng;
+        }
+    }
+
+    // 5. Process WRONG_SALES_PITCH
+    if (selectedIssues.has('WRONG_SALES_PITCH')) {
+        const inSlogan = (document.getElementById('repInputSlogan')?.value || '').trim();
+        const inClaims = formatPipeString(document.getElementById('repInputClaims')?.value);
+        const inTargets = formatPipeString(document.getElementById('repInputTargets')?.value);
+
+        if (inSlogan) {
+            payload.target_csv_columns.push('slogan');
+            payload.current_values_json['slogan'] = p.slogan || '';
+            payload.suggested_replacements_json['slogan'] = inSlogan;
+        }
+        if (inClaims) {
+            payload.target_csv_columns.push('claims');
+            payload.current_values_json['claims'] = Array.isArray(p.claims) ? p.claims.join(' | ') : (p.claims || '');
+            payload.suggested_replacements_json['claims'] = inClaims;
+        }
+        if (inTargets) {
+            payload.target_csv_columns.push('targets');
+            payload.current_values_json['targets'] = Array.isArray(p.targets) ? p.targets.join(' | ') : (p.targets || '');
+            payload.suggested_replacements_json['targets'] = inTargets;
+        }
+    }
+
+    // 6. Process WRONG_TMR_OPS
+    if (selectedIssues.has('WRONG_TMR_OPS')) {
+        const inTips = formatPipeString(document.getElementById('repInputTips')?.value);
+        const inSampling = formatPipeString(document.getElementById('repInputSampling')?.value);
+        const inPlano = formatPipeString(document.getElementById('repInputPlano')?.value);
+
+        if (inTips) {
+            payload.target_csv_columns.push('tips');
+            payload.current_values_json['tips'] = Array.isArray(p.tips) ? p.tips.join(' | ') : (p.tips || '');
+            payload.suggested_replacements_json['tips'] = inTips;
+        }
+        if (inSampling) {
+            payload.target_csv_columns.push('sampling');
+            payload.current_values_json['sampling'] = Array.isArray(p.sampling) ? p.sampling.join(' | ') : (p.sampling || '');
+            payload.suggested_replacements_json['sampling'] = inSampling;
+        }
+        if (inPlano) {
+            payload.target_csv_columns.push('plano');
+            payload.current_values_json['plano'] = Array.isArray(p.plano) ? p.plano.join(' | ') : (p.plano || '');
+            payload.suggested_replacements_json['plano'] = inPlano;
+        }
+    }
+
+    // 7. Process WRONG_NEGOTIATION
+    if (selectedIssues.has('WRONG_NEGOTIATION')) {
+        const inComp = (document.getElementById('repInputCompetitor')?.value || '').trim();
+        const inNeg = formatPipeString(document.getElementById('repInputNegotiation')?.value);
+
+        if (inComp) {
+            payload.target_csv_columns.push('competitor');
+            payload.current_values_json['competitor'] = p.competitor || '';
+            payload.suggested_replacements_json['competitor'] = inComp;
+        }
+        if (inNeg) {
+            payload.target_csv_columns.push('negotiation');
+            payload.current_values_json['negotiation'] = Array.isArray(p.negotiation) ? p.negotiation.join(' | ') : (p.negotiation || '');
+            payload.suggested_replacements_json['negotiation'] = inNeg;
+        }
+    }
+
+    // 8. Process DISCONTINUED_OR_OTHER
+    if (selectedIssues.has('DISCONTINUED_OR_OTHER')) {
+        const isDiscontinued = document.getElementById('repCheckDiscontinued')?.checked;
+        const otherNotes = (document.getElementById('repInputOtherNotes')?.value || '').trim();
+
+        if (isDiscontinued) {
+            payload.target_csv_columns.push('status');
+            payload.current_values_json['is_discontinued'] = false;
+            payload.suggested_replacements_json['is_discontinued'] = true;
+        }
+        if (otherNotes) {
+            payload.suggested_replacements_json['other_notes'] = otherNotes;
+        }
+    }
+
+    // Deduplicate target CSV columns
+    payload.target_csv_columns = Array.from(new Set(payload.target_csv_columns));
+
+    return payload;
+}
+
+/**
+ * Offline Queue Utilities
+ */
+function getPendingReports() {
+    try {
+        const raw = localStorage.getItem(PENDING_REPORTS_KEY);
+        return raw ? JSON.parse(raw) : [];
+    } catch (e) {
+        console.error('Error reading offline pending reports:', e);
+        return [];
+    }
+}
+
+function savePendingReports(reports) {
+    try {
+        localStorage.setItem(PENDING_REPORTS_KEY, JSON.stringify(reports));
+    } catch (e) {
+        console.error('Error saving offline pending reports:', e);
+    }
+}
+
+function queueOfflineReport(payload) {
+    const queue = getPendingReports();
+    queue.push(payload);
+    savePendingReports(queue);
+    console.log(`[TMR Report] Queued report offline (${payload.report_id}). Total in queue: ${queue.length}`);
+}
+
+/**
+ * Flushes queued offline reports when back online.
+ */
+async function flushPendingReports() {
+    if (!navigator.onLine) return;
+    const isPlaceholderUrl = !REPORT_WEBHOOK_URL || REPORT_WEBHOOK_URL.includes('placeholder');
+    if (isPlaceholderUrl) return;
+
+    const queue = getPendingReports();
+    if (!queue || queue.length === 0) return;
+
+    console.log(`[TMR Report] Attempting to flush ${queue.length} offline report(s)...`);
+    const remaining = [];
+    let sentCount = 0;
+
+    for (const report of queue) {
+        try {
+            const response = await fetch(REPORT_WEBHOOK_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify(report)
+            });
+
+            if (response.ok) {
+                sentCount++;
+            } else {
+                remaining.push(report);
+            }
+        } catch (err) {
+            remaining.push(report);
+        }
+    }
+
+    savePendingReports(remaining);
+    if (sentCount > 0) {
+        showToast(`${sentCount} گزارش ثبت‌شده در حالت آفلاین، با موفقیت به سرور ارسال گردید.`, 'success', 4000);
+    }
+}
+
+window.addEventListener('online', () => {
+    showToast('اتصال اینترنت برقرار شد. همگام‌سازی گزارش‌ها...', 'info', 2000);
+    flushPendingReports();
+});
+
+/**
+ * Dispatches payload to Webhook or queues offline if network fails.
+ */
+async function sendReportPayload(payload) {
+    // If browser is explicitly offline
+    if (!navigator.onLine) {
+        queueOfflineReport(payload);
+        return {
+            success: true,
+            offline: true,
+            message: 'دستگاه در حالت آفلاین است. گزارش شما در حافظه ذخیره شد و به محض اتصال به اینترنت ارسال خواهد شد.'
+        };
+    }
+
+    const isPlaceholderUrl = !REPORT_WEBHOOK_URL || REPORT_WEBHOOK_URL.includes('placeholder');
+
+    if (isPlaceholderUrl) {
+        // Save in queue / local archive in demo mode
+        queueOfflineReport(payload);
+        console.log('[TMR Report System - Demo Mode] Payload generated & saved locally:', payload);
+        return {
+            success: true,
+            offline: false,
+            isDemo: true,
+            message: 'گزارش اصلاح با موفقیت ثبت شد (حالت آزمایشی / ذخیره محلی).'
+        };
+    }
+
+    try {
+        const response = await fetch(REPORT_WEBHOOK_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'text/plain;charset=utf-8'
+            },
+            body: JSON.stringify(payload)
+        });
+
+        if (response.ok) {
+            return {
+                success: true,
+                offline: false,
+                message: 'گزارش اصلاح با موفقیت برای تیم بازاریابی و IT ارسال شد.'
+            };
+        } else {
+            throw new Error(`Server returned HTTP ${response.status}`);
+        }
+    } catch (err) {
+        console.warn('[TMR Report] Network transmission failed, queueing offline:', err);
+        queueOfflineReport(payload);
+        return {
+            success: true,
+            offline: true,
+            message: 'ارسال با خطای شبکه مواجه شد. گزارش در صف آفلاین ذخیره گردید و مجدداً تلاش خواهد شد.'
+        };
+    }
+}
+
+function setSubmitButtonState(state) {
+    const btn = document.getElementById('btnSubmitReport');
+    const icon = document.getElementById('repSubmitIcon');
+    const text = document.getElementById('repSubmitText');
+    if (!btn || !text || !icon) return;
+
+    if (state === 'loading') {
+        btn.disabled = true;
+        icon.innerText = '⏳';
+        text.innerText = 'در حال ارسال گزارش...';
+    } else if (state === 'success') {
+        btn.disabled = true;
+        icon.innerText = '✅';
+        text.innerText = 'ارسال با موفقیت انجام شد';
+    } else {
+        btn.disabled = false;
+        icon.innerText = '📤';
+        text.innerText = 'ارسال گزارش اصلاح';
+    }
+}
+
+/**
+ * Main Report Submission Handler
+ */
+async function submitReport() {
+    if (!activeReportProduct) {
+        showToast('خطا: محصولی انتخاب نشده است.', 'error');
+        return;
+    }
+
+    const problemText = (document.getElementById('repProblemText')?.value || '').trim();
+
+    // Validation: Require either at least one issue chip OR problem description
+    if (selectedIssues.size === 0 && !problemText) {
+        showToast('لطفاً حداقل یکی از گزینه‌های نقص اطلاعات را انتخاب نموده یا توضیحی بنویسید.', 'warning');
+        return;
+    }
+
+    const payload = buildReportPayload();
+    if (!payload) {
+        showToast('خطا در پردازش اطلاعات گزارش.', 'error');
+        return;
+    }
+
+    setSubmitButtonState('loading');
+
+    try {
+        const result = await sendReportPayload(payload);
+        setSubmitButtonState('success');
+        showToast(result.message, result.offline ? 'warning' : 'success', 4000);
+
+        setTimeout(() => {
+            closeReportModal();
+        }, 1200);
+    } catch (err) {
+        setSubmitButtonState('idle');
+        showToast(`خطا در ثبت گزارش: ${err.message}`, 'error');
+    }
+}
+
 document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && isReportModalOpen) {
+        closeReportModal();
+        return;
+    }
+    if (isReportModalOpen) return;
+    if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName)) return;
     if (!isUnlocked) return;
     const flashcardView = document.getElementById('viewFlashcards');
     if (!flashcardView || !flashcardView.classList.contains('active')) return;

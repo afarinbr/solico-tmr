@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>سامانه آموزش تعاملی سولیکو کاله</title>
-    <link rel="stylesheet" href="./css/app.css?v=20261014-v13">
+    <link rel="stylesheet" href="./css/app.css?v=20261121-v14">
     <link rel="manifest" href="./manifest.json">
     <meta name="theme-color" content="#0284c7">
     <meta name="mobile-web-app-capable" content="yes">
@@ -127,7 +127,10 @@
                         <!-- Front -->
                         <div class="card-face card-face-front">
                             <div class="front-hero">
-                                <button class="btn-like" id="likeBtn" onclick="toggleCurrentFav()">🤍</button>
+                                <div class="card-hero-action-buttons">
+                                    <button class="btn-like" id="likeBtn" onclick="toggleCurrentFav()" title="افزودن به علاقه‌مندی‌ها">🤍</button>
+                                    <button class="btn-report" id="reportBtn" onclick="openReportModal()" title="گزارش اصلاح / ثبت خطا">🚩</button>
+                                </div>
                                 <div class="product-img-box">
                                     <img id="f_img" src="" alt="" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'60\' height=\'60\'><text x=\'50%\' y=\'50%\' font-size=\'10\' text-anchor=\'middle\' fill=\'%23888\'>بدون تصویر</text></svg>'">
                                 </div>
@@ -150,7 +153,10 @@
 
                         <!-- Back -->
                         <div class="card-face card-face-back">
-                            <div class="back-top">اطلاعات فنی و عملیاتی TMR</div>
+                            <div class="back-top-bar">
+                                <div class="back-top">اطلاعات فنی و عملیاتی TMR</div>
+                                <button type="button" class="btn-back-report" onclick="openReportModal()" title="گزارش اصلاح / خطا">🚩 گزارش خطا</button>
+                            </div>
                             <div class="back-nav">
                                 <button class="tab-btn active" onclick="switchTab('tab-tmr')">عملیات TMR</button>
                                 <button class="tab-btn" onclick="switchTab('tab-nutrition')">تغذیه</button>
@@ -210,6 +216,14 @@
                     <button class="ctrl-btn flip" onclick="flipCard()">🔄 چرخش کارت</button>
                     <button class="ctrl-btn" onclick="nextCard()">بعدی ❯</button>
                 </div>
+
+                <!-- Subtle Report Trigger -->
+                <div class="card-sub-actions">
+                    <button type="button" class="btn-subtle-report" onclick="openReportModal()" title="گزارش اصلاح یا ثبت نقص اطلاعات">
+                        <span class="subtle-report-icon">🚩</span>
+                        <span>گزارش اصلاح اطلاعات یا ثبت نقص این محصول</span>
+                    </button>
+                </div>
             </div>
 
             <!-- List View Mode -->
@@ -229,7 +243,370 @@
 
     </div>
 
-    <script src="./js/app.js?v=20261014-v13"></script>
+    <!-- Product Issue Reporting & Replacement Bottom Sheet Modal -->
+    <div class="report-modal-overlay" id="reportModalOverlay" onclick="handleReportOverlayClick(event)">
+        <div class="report-sheet" id="reportSheet" onclick="event.stopPropagation()">
+            <div class="sheet-handle-bar"></div>
+            
+            <!-- Modal Header -->
+            <div class="report-sheet-header">
+                <div class="report-sheet-title">
+                    <span class="report-title-icon">🚩</span>
+                    <span>گزارش اصلاح و پیشنهاد جایگزینی</span>
+                </div>
+                <button type="button" class="btn-close-sheet" onclick="closeReportModal()" title="بستن">✕</button>
+            </div>
+
+            <!-- Auto-detected Product Banner -->
+            <div class="report-product-banner">
+                <img id="repBannerThumb" src="" alt="" class="rep-banner-thumb">
+                <div class="rep-banner-details">
+                    <div class="rep-banner-title" id="repBannerTitle">...</div>
+                    <div class="rep-banner-meta">
+                        <span class="rep-meta-badge sku" id="repBannerSku">SKU: -</span>
+                        <span class="rep-meta-badge cat" id="repBannerCategory">واحد تجاری › دسته‌بندی</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Scrollable Content -->
+            <div class="report-sheet-scroll">
+                <!-- Step 1: Issue Selection -->
+                <div class="rep-section">
+                    <div class="rep-step-title">
+                        <span class="rep-step-num">۱</span>
+                        <span>مورد یا موارد دارای ایراد را انتخاب فرمایید:</span>
+                    </div>
+                    <div class="rep-issues-grid">
+                        <div class="rep-issue-chip" data-issue="WRONG_CATEGORY" onclick="toggleIssueType('WRONG_CATEGORY')">
+                            <span class="rep-issue-chip-icon">🏷️</span>
+                            <div class="rep-issue-chip-text">
+                                <strong class="rep-chip-title">دسته‌بندی یا گروه</strong>
+                                <span class="rep-chip-desc">واحد تجاری یا دسته اشتباه است</span>
+                            </div>
+                        </div>
+
+                        <div class="rep-issue-chip" data-issue="WRONG_IMAGE" onclick="toggleIssueType('WRONG_IMAGE')">
+                            <span class="rep-issue-chip-icon">📷</span>
+                            <div class="rep-issue-chip-text">
+                                <strong class="rep-chip-title">تصویر محصول</strong>
+                                <span class="rep-chip-desc">عکس اشتباه، ناموجود یا بی‌کیفیت</span>
+                            </div>
+                        </div>
+
+                        <div class="rep-issue-chip" data-issue="WRONG_BASIC_INFO" onclick="toggleIssueType('WRONG_BASIC_INFO')">
+                            <span class="rep-issue-chip-icon">📝</span>
+                            <div class="rep-issue-chip-text">
+                                <strong class="rep-chip-title">اطلاعات پایه</strong>
+                                <span class="rep-chip-desc">نام، اوزان یا کد SKU محصول</span>
+                            </div>
+                        </div>
+
+                        <div class="rep-issue-chip" data-issue="WRONG_NUTRITION" onclick="toggleIssueType('WRONG_NUTRITION')">
+                            <span class="rep-issue-chip-icon">🥗</span>
+                            <div class="rep-issue-chip-text">
+                                <strong class="rep-chip-title">ارزش غذایی و ترکیبات</strong>
+                                <span class="rep-chip-desc">جدول تغذیه یا مواد تشکیل‌دهنده</span>
+                            </div>
+                        </div>
+
+                        <div class="rep-issue-chip" data-issue="WRONG_SALES_PITCH" onclick="toggleIssueType('WRONG_SALES_PITCH')">
+                            <span class="rep-issue-chip-icon">✨</span>
+                            <div class="rep-issue-chip-text">
+                                <strong class="rep-chip-title">پیام‌های فروش</strong>
+                                <span class="rep-chip-desc">اسلوگان، جملات کلیدی، بازار هدف</span>
+                            </div>
+                        </div>
+
+                        <div class="rep-issue-chip" data-issue="WRONG_TMR_OPS" onclick="toggleIssueType('WRONG_TMR_OPS')">
+                            <span class="rep-issue-chip-icon">🎯</span>
+                            <div class="rep-issue-chip-text">
+                                <strong class="rep-chip-title">عملیات میدانی TMR</strong>
+                                <span class="rep-chip-desc">نکات پرزنت، سمپلینگ، چیدمان</span>
+                            </div>
+                        </div>
+
+                        <div class="rep-issue-chip" data-issue="WRONG_NEGOTIATION" onclick="toggleIssueType('WRONG_NEGOTIATION')">
+                            <span class="rep-issue-chip-icon">🤝</span>
+                            <div class="rep-issue-chip-text">
+                                <strong class="rep-chip-title">مذاکره و رقبا</strong>
+                                <span class="rep-chip-desc">تحلیل رقیب، اهرم متقاعدسازی</span>
+                            </div>
+                        </div>
+
+                        <div class="rep-issue-chip" data-issue="DISCONTINUED_OR_OTHER" onclick="toggleIssueType('DISCONTINUED_OR_OTHER')">
+                            <span class="rep-issue-chip-icon">⚠️</span>
+                            <div class="rep-issue-chip-text">
+                                <strong class="rep-chip-title">توقف تولید / سایر</strong>
+                                <span class="rep-chip-desc">عدم تولید یا پیشنهاد تکمیلی</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 2: Dynamic Subforms Container -->
+                <div class="rep-section" id="repSubformsSection">
+                    <div class="rep-step-title">
+                        <span class="rep-step-num">۲</span>
+                        <span>مقادیر پیشنهادی و اصلاحات دقیق را وارد کنید:</span>
+                    </div>
+
+                    <!-- Empty state if no issue selected yet -->
+                    <div class="rep-empty-selection-hint" id="repEmptyHint">
+                        💡 لطفاً حداقل یکی از موارد فوق را انتخاب نمایید تا فیلدهای اصلاح مربوطه نمایش داده شوند.
+                    </div>
+
+                    <div class="rep-subforms-list" id="repSubformsList">
+
+                        <!-- Subform: WRONG_CATEGORY -->
+                        <div class="rep-subform-box" id="subform_WRONG_CATEGORY" style="display:none;">
+                            <div class="rep-subform-head">
+                                <span class="rep-subform-icon">🏷️</span>
+                                <h4>اصلاح گروه کسب‌وکار و دسته‌بندی محصول</h4>
+                            </div>
+                            <div class="rep-current-info-pill">
+                                <span>مقدار فعلی:</span>
+                                <strong id="repCurCatDisplay">-</strong>
+                            </div>
+                            <div class="rep-form-row">
+                                <label class="rep-label">گروه کسب‌وکار صحیح:</label>
+                                <select class="rep-select" id="repSelectBU"></select>
+                            </div>
+                            <div class="rep-form-row">
+                                <label class="rep-label">دسته‌بندی صحیح:</label>
+                                <select class="rep-select" id="repSelectCategory"></select>
+                            </div>
+                            <div class="rep-form-row" id="repCustomCategoryWrap" style="display:none;">
+                                <label class="rep-label">نام گروه یا دسته‌بندی پیشنهادی (جدید):</label>
+                                <input type="text" class="rep-input" id="repCustomCategoryInput" placeholder="مثال: نوشیدنی عملکردی، سس تخصصی...">
+                            </div>
+                        </div>
+
+                        <!-- Subform: WRONG_IMAGE -->
+                        <div class="rep-subform-box" id="subform_WRONG_IMAGE" style="display:none;">
+                            <div class="rep-subform-head">
+                                <span class="rep-subform-icon">📷</span>
+                                <h4>تصویر جدید یا اصلاحی محصول</h4>
+                            </div>
+                            <div class="rep-image-compare-box">
+                                <div class="rep-img-col">
+                                    <span class="rep-sub-label">تصویر فعلی:</span>
+                                    <img id="repCurImgPreview" src="" alt="عکس فعلی" class="rep-compare-thumb">
+                                </div>
+                                <div class="rep-img-col">
+                                    <span class="rep-sub-label">تصویر جایگزین (جدید):</span>
+                                    <div class="rep-upload-dropzone" onclick="document.getElementById('repImageFileInput').click()">
+                                        <input type="file" id="repImageFileInput" accept="image/*" capture="environment" style="display:none;" onchange="handleReportImageSelect(event)">
+                                        <div id="repUploadPrompt">
+                                            <span style="font-size:1.4rem;">📸</span>
+                                            <span style="font-size:0.72rem; font-weight:700; color:var(--theme-primary);">عکس‌برداری یا انتخاب عکس</span>
+                                            <span style="font-size:0.62rem; color:#94a3b8;">فشرده‌سازی خودکار کمتر از ۱۵۰KB</span>
+                                        </div>
+                                        <div id="repUploadPreviewWrap" style="display:none;">
+                                            <img id="repNewImgPreview" src="" alt="پیش‌نمایش جدید" class="rep-compare-thumb">
+                                            <button type="button" class="btn-remove-rep-img" onclick="event.stopPropagation(); removeReportImage()">حذف تصویر ✕</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Subform: WRONG_BASIC_INFO -->
+                        <div class="rep-subform-box" id="subform_WRONG_BASIC_INFO" style="display:none;">
+                            <div class="rep-subform-head">
+                                <span class="rep-subform-icon">📝</span>
+                                <h4>اصلاح اطلاعات پایه (نام، وزن، SKU)</h4>
+                            </div>
+                            <div class="rep-field-group">
+                                <div class="rep-field-label">
+                                    <span>نام محصول:</span>
+                                    <span class="rep-cur-val-badge" id="repCurTitleBadge">-</span>
+                                </div>
+                                <input type="text" class="rep-input" id="repInputTitle" placeholder="نام اصلاح‌شده محصول...">
+                            </div>
+                            <div class="rep-field-group">
+                                <div class="rep-field-label">
+                                    <span>اوزان و بسته‌بندی:</span>
+                                    <span class="rep-cur-val-badge" id="repCurWeightsBadge">-</span>
+                                </div>
+                                <input type="text" class="rep-input" id="repInputWeights" placeholder="مثال: 105 گرم (کارتن 30 عددی)...">
+                            </div>
+                            <div class="rep-field-group">
+                                <div class="rep-field-label">
+                                    <span>کد کالا یا SKU:</span>
+                                    <span class="rep-cur-val-badge" id="repCurSkuBadge">-</span>
+                                </div>
+                                <input type="text" class="rep-input" id="repInputSku" placeholder="کد صحیح محصول...">
+                            </div>
+                        </div>
+
+                        <!-- Subform: WRONG_NUTRITION -->
+                        <div class="rep-subform-box" id="subform_WRONG_NUTRITION" style="display:none;">
+                            <div class="rep-subform-head">
+                                <span class="rep-subform-icon">🥗</span>
+                                <h4>اصلاح ارزش غذایی و ترکیبات</h4>
+                            </div>
+                            <div class="rep-nutrition-grid-inputs">
+                                <div class="rep-nutri-input-item">
+                                    <div class="rep-nutri-label">انرژی <span class="rep-cur-small" id="repCurEnergy">(-)</span></div>
+                                    <input type="text" class="rep-input-sm" id="repInputEnergy" placeholder="kcal">
+                                </div>
+                                <div class="rep-nutri-input-item">
+                                    <div class="rep-nutri-label">پروتئین <span class="rep-cur-small" id="repCurProtein">(-)</span></div>
+                                    <input type="text" class="rep-input-sm" id="repInputProtein" placeholder="g">
+                                </div>
+                                <div class="rep-nutri-input-item">
+                                    <div class="rep-nutri-label">چربی <span class="rep-cur-small" id="repCurFat">(-)</span></div>
+                                    <input type="text" class="rep-input-sm" id="repInputFat" placeholder="g">
+                                </div>
+                                <div class="rep-nutri-input-item">
+                                    <div class="rep-nutri-label">قند <span class="rep-cur-small" id="repCurSugar">(-)</span></div>
+                                    <input type="text" class="rep-input-sm" id="repInputSugar" placeholder="g">
+                                </div>
+                                <div class="rep-nutri-input-item">
+                                    <div class="rep-nutri-label">نمک <span class="rep-cur-small" id="repCurSalt">(-)</span></div>
+                                    <input type="text" class="rep-input-sm" id="repInputSalt" placeholder="g">
+                                </div>
+                                <div class="rep-nutri-input-item">
+                                    <div class="rep-nutri-label">ماندگاری <span class="rep-cur-small" id="repCurShelfLife">(-)</span></div>
+                                    <input type="text" class="rep-input-sm" id="repInputShelfLife" placeholder="روز">
+                                </div>
+                            </div>
+                            <div class="rep-field-group" style="margin-top:10px;">
+                                <div class="rep-field-label">
+                                    <span>ترکیبات اصلی:</span>
+                                    <span class="rep-cur-val-badge" id="repCurIngredientsBadge">-</span>
+                                </div>
+                                <textarea class="rep-textarea" id="repInputIngredients" rows="2" placeholder="ترکیبات اصلاح‌شده..."></textarea>
+                            </div>
+                        </div>
+
+                        <!-- Subform: WRONG_SALES_PITCH -->
+                        <div class="rep-subform-box" id="subform_WRONG_SALES_PITCH" style="display:none;">
+                            <div class="rep-subform-head">
+                                <span class="rep-subform-icon">✨</span>
+                                <h4>اصلاح اسلوگان، جملات فروش و بازار هدف</h4>
+                            </div>
+                            <div class="rep-field-group">
+                                <div class="rep-field-label">
+                                    <span>اسلوگان / شعار تبلیغاتی:</span>
+                                    <span class="rep-cur-val-badge" id="repCurSloganBadge">-</span>
+                                </div>
+                                <input type="text" class="rep-input" id="repInputSlogan" placeholder="شعار اصلاح‌شده...">
+                            </div>
+                            <div class="rep-field-group">
+                                <div class="rep-field-label">
+                                    <span>جملات کلیدی فروش (Claims):</span>
+                                    <span class="rep-hint-text">تفکیک با | یا خطوط جداگانه</span>
+                                </div>
+                                <textarea class="rep-textarea" id="repInputClaims" rows="3" placeholder="مورد ۱ | مورد ۲ | مورد ۳..."></textarea>
+                            </div>
+                            <div class="rep-field-group">
+                                <div class="rep-field-label">
+                                    <span>بازار و مشتریان هدف (Targets):</span>
+                                    <span class="rep-hint-text">تفکیک با | یا خطوط جداگانه</span>
+                                </div>
+                                <textarea class="rep-textarea" id="repInputTargets" rows="3" placeholder="گروه هدف ۱ | گروه هدف ۲..."></textarea>
+                            </div>
+                        </div>
+
+                        <!-- Subform: WRONG_TMR_OPS -->
+                        <div class="rep-subform-box" id="subform_WRONG_TMR_OPS" style="display:none;">
+                            <div class="rep-subform-head">
+                                <span class="rep-subform-icon">🎯</span>
+                                <h4>اصلاح نکات پرزنت، سمپلینگ و چیدمان شلف</h4>
+                            </div>
+                            <div class="rep-field-group">
+                                <div class="rep-field-label">
+                                    <span>نکات پرزنت و فروش میدانی (Tips):</span>
+                                    <span class="rep-hint-text">تفکیک با | یا خطوط جداگانه</span>
+                                </div>
+                                <textarea class="rep-textarea" id="repInputTips" rows="3" placeholder="نکته ۱ | نکته ۲..."></textarea>
+                            </div>
+                            <div class="rep-field-group">
+                                <div class="rep-field-label">
+                                    <span>سناریوی سمپلینگ و تست طعم (Sampling):</span>
+                                    <span class="rep-hint-text">تفکیک با | یا خطوط جداگانه</span>
+                                </div>
+                                <textarea class="rep-textarea" id="repInputSampling" rows="3" placeholder="نحوه تعارف و گفتگوی سمپلینگ..."></textarea>
+                            </div>
+                            <div class="rep-field-group">
+                                <div class="rep-field-label">
+                                    <span>چیدمان و پلانوگرام شلف (Plano):</span>
+                                    <span class="rep-hint-text">تفکیک با | یا خطوط جداگانه</span>
+                                </div>
+                                <textarea class="rep-textarea" id="repInputPlano" rows="3" placeholder="طبقه شلف | دید مشتری | قاعده FEFO..."></textarea>
+                            </div>
+                        </div>
+
+                        <!-- Subform: WRONG_NEGOTIATION -->
+                        <div class="rep-subform-box" id="subform_WRONG_NEGOTIATION" style="display:none;">
+                            <div class="rep-subform-head">
+                                <span class="rep-subform-icon">🤝</span>
+                                <h4>اصلاح وضعیت رقبا و مذاکرات فروشگاه</h4>
+                            </div>
+                            <div class="rep-field-group">
+                                <div class="rep-field-label">
+                                    <span>رقبای اصلی و مزیت رقابتی کاله (Competitors):</span>
+                                </div>
+                                <textarea class="rep-textarea" id="repInputCompetitor" rows="2" placeholder="برند رقیب و مزیت تمایز محصول کاله..."></textarea>
+                            </div>
+                            <div class="rep-field-group">
+                                <div class="rep-field-label">
+                                    <span>اهرم‌ها و سناریوی مذاکره (Negotiation):</span>
+                                    <span class="rep-hint-text">تفکیک با | یا خطوط جداگانه</span>
+                                </div>
+                                <textarea class="rep-textarea" id="repInputNegotiation" rows="3" placeholder="پاسخ به اعتراض قیمت | سود ناخالص سوپرمارکت..."></textarea>
+                            </div>
+                        </div>
+
+                        <!-- Subform: DISCONTINUED_OR_OTHER -->
+                        <div class="rep-subform-box" id="subform_DISCONTINUED_OR_OTHER" style="display:none;">
+                            <div class="rep-subform-head">
+                                <span class="rep-subform-icon">⚠️</span>
+                                <h4>توقف تولید یا پیشنهاد جدید</h4>
+                            </div>
+                            <label class="rep-checkbox-label">
+                                <input type="checkbox" id="repCheckDiscontinued">
+                                <span>این محصول توقف تولید (Discontinued) شده و باید از کاتالوگ خارج شود.</span>
+                            </label>
+                            <div class="rep-field-group" style="margin-top:10px;">
+                                <div class="rep-field-label">
+                                    <span>پیشنهاد یا یادداشت تکمیلی:</span>
+                                </div>
+                                <textarea class="rep-textarea" id="repInputOtherNotes" rows="2" placeholder="هرگونه پیشنهاد درباره بسته‌بندی، فرمولاسیون، طعم یا بهینه‌سازی..."></textarea>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Step 3: General Problem Description -->
+                <div class="rep-section" style="margin-top:14px;">
+                    <div class="rep-step-title">
+                        <span class="rep-step-num">۳</span>
+                        <span>توضیح مشکل یا نکته تکمیلی (دلایل اصلاحیه):</span>
+                    </div>
+                    <textarea class="rep-textarea" id="repProblemText" rows="3" placeholder="علت نادرست بودن اطلاعات یا هر نکته‌ای که به بررسی سریع‌تر کمک می‌کند را بنویسید..."></textarea>
+                </div>
+
+            </div>
+
+            <!-- Sticky Sheet Footer -->
+            <div class="report-sheet-footer">
+                <button type="button" class="btn-cancel-report" onclick="closeReportModal()">انصراف</button>
+                <button type="button" class="btn-submit-report" id="btnSubmitReport" onclick="submitReport()">
+                    <span id="repSubmitIcon">📤</span>
+                    <span id="repSubmitText">ارسال گزارش اصلاح</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Global Toast Container -->
+    <div class="app-toast-container" id="appToastContainer"></div>
+
+    <script src="./js/app.js?v=20261121-v14"></script>
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
