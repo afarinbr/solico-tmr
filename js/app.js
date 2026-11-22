@@ -862,8 +862,11 @@ function renderList() {
                     </div>
                 </div>
                 <div class="product-list-actions">
-                    <button class="btn-list-report" title="گزارش اصلاح این محصول" onclick="event.stopPropagation(); openReportModalForProduct(${idx})">
-                        🚩
+                    <button class="btn-list-report" title="ثبت اصلاحیه کالا" onclick="event.stopPropagation(); openReportModalForProduct(${idx})">
+                        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                        </svg>
                     </button>
                     <button class="btn-list-like ${isFav ? 'liked' : ''}" title="${isFav ? 'حذف از علاقه‌مندی‌ها' : 'افزودن به علاقه‌مندی‌ها'}" onclick="event.stopPropagation(); toggleFavById('${p.id}')">
                         ${isFav ? '❤️' : '🤍'}
@@ -1026,7 +1029,7 @@ function handleSearch(query) {
 }
 
 /* ==========================================================================
-   Product Issue Reporting & Replacement Suggestion Subsystem
+   Product Issue Reporting & Replacement Suggestion Subsystem (Survey Flow)
    ========================================================================== */
 
 // Configurable Webhook URL for Google Sheets / Google Apps Script
@@ -1034,7 +1037,8 @@ const REPORT_WEBHOOK_URL = window.SOLICO_REPORT_WEBHOOK_URL || 'https://script.g
 const PENDING_REPORTS_KEY = 'solico_tmr_pending_reports';
 
 let activeReportProduct = null;
-let selectedIssues = new Set();
+let currentReportCategory = null; // 'WRONG_CONTENT' | 'WRONG_CATEGORY' | 'WRONG_IMAGE' | 'DISCONTINUED' | 'OTHER'
+let currentContentChapter = 'chap_basic'; // 'chap_basic' | 'chap_pitch' | 'chap_ops' | 'chap_nutrition' | 'chap_negotiation'
 let isReportModalOpen = false;
 let currentReportImage = {
     hasImage: false,
@@ -1081,7 +1085,7 @@ function openReportModalForProduct(index) {
 }
 
 /**
- * Opens the RTL Bottom-Sheet Modal and populates auto-detected product context.
+ * Opens the RTL Bottom-Sheet Modal and displays Step 1 (Survey Categories).
  */
 function openReportModal(product = null) {
     const p = product || (currentProducts && currentProducts[currentIndex]);
@@ -1091,6 +1095,8 @@ function openReportModal(product = null) {
     }
 
     activeReportProduct = p;
+    currentReportCategory = null;
+    currentContentChapter = 'chap_basic';
     isReportModalOpen = true;
 
     // Apply product BU theme to sheet if applicable
@@ -1110,31 +1116,24 @@ function openReportModal(product = null) {
     if (bannerSku) bannerSku.innerText = `SKU: ${p.sku || 'نامشخص'}`;
     if (bannerCat) bannerCat.innerText = `${p.business || '-'} › ${p.category_name || '-'}`;
 
-    // 2. Reset Issue Selection State
-    selectedIssues.clear();
-    document.querySelectorAll('.rep-issue-chip').forEach(chip => chip.classList.remove('active'));
+    // Reset views: Show Step 1, hide others
+    const viewCat = document.getElementById('repViewCategories');
+    const viewDet = document.getElementById('repViewDetails');
+    const viewSuc = document.getElementById('repViewSuccessPrompt');
+    const btnBack = document.getElementById('btnRepSheetBack');
 
-    // 3. Reset Subforms visibility
-    updateSubformsVisibility();
+    if (viewCat) viewCat.style.display = 'block';
+    if (viewDet) viewDet.style.display = 'none';
+    if (viewSuc) viewSuc.style.display = 'none';
+    if (btnBack) btnBack.style.display = 'none';
 
-    // 4. Pre-fill & Pre-reveal current values in all subforms
-    populateCategorySubform(p);
-    populateImageSubform(p);
-    populateBasicInfoSubform(p);
-    populateNutritionSubform(p);
-    populateSalesPitchSubform(p);
-    populateTmrOpsSubform(p);
-    populateNegotiationSubform(p);
-    populateDiscontinuedSubform(p);
-
-    // Reset General description
-    const problemInput = document.getElementById('repProblemText');
-    if (problemInput) problemInput.value = '';
+    // Reset all inputs
+    resetAllReportInputs();
 
     // Reset submit button state
     setSubmitButtonState('idle');
 
-    // 5. Open Bottom Sheet
+    // Open Bottom Sheet
     const overlay = document.getElementById('reportModalOverlay');
     const sheet = document.getElementById('reportSheet');
     if (overlay && sheet) {
@@ -1143,8 +1142,49 @@ function openReportModal(product = null) {
         document.body.style.overflow = 'hidden';
     }
 
-    // Attempt to flush any offline pending reports in background
+    // Flush any pending reports in background
     flushPendingReports();
+}
+
+/**
+ * Resets all input fields across all detail subforms.
+ */
+function resetAllReportInputs() {
+    const problemInput = document.getElementById('repProblemText');
+    if (problemInput) problemInput.value = '';
+
+    // Basic
+    ['Title', 'Weights', 'Sku', 'Slogan'].forEach(f => {
+        const el = document.getElementById(`repInput${f}`);
+        if (el) el.value = '';
+    });
+
+    // Nutrition
+    ['Energy', 'Protein', 'Fat', 'Sugar', 'Salt', 'ShelfLife'].forEach(f => {
+        const el = document.getElementById(`repInput${f}`);
+        if (el) el.value = '';
+    });
+    const inIng = document.getElementById('repInputIngredients');
+    if (inIng) inIng.value = '';
+
+    // Competitor
+    const inComp = document.getElementById('repInputCompetitor');
+    if (inComp) inComp.value = '';
+
+    // Category
+    const customCat = document.getElementById('repCustomCategoryInput');
+    if (customCat) customCat.value = '';
+
+    // Image
+    removeReportImage();
+
+    // Discontinued & Other
+    const chkDisc = document.getElementById('repCheckDiscontinued');
+    if (chkDisc) chkDisc.checked = true;
+    const inDisc = document.getElementById('repInputDiscontinuedNotes');
+    if (inDisc) inDisc.value = '';
+    const inOther = document.getElementById('repInputOtherNotes');
+    if (inOther) inOther.value = '';
 }
 
 /**
@@ -1160,6 +1200,7 @@ function closeReportModal() {
     }
     isReportModalOpen = false;
     activeReportProduct = null;
+    currentReportCategory = null;
     removeReportImage();
 }
 
@@ -1170,46 +1211,262 @@ function handleReportOverlayClick(e) {
 }
 
 /**
- * Toggles an issue type chip.
+ * Step 1 -> Step 2: Transition when user selects a report category.
  */
-function toggleIssueType(issueType) {
-    const chip = document.querySelector(`.rep-issue-chip[data-issue="${issueType}"]`);
-    if (selectedIssues.has(issueType)) {
-        selectedIssues.delete(issueType);
-        if (chip) chip.classList.remove('active');
-    } else {
-        selectedIssues.add(issueType);
-        if (chip) chip.classList.add('active');
+function selectReportCategory(categoryKey) {
+    const p = activeReportProduct;
+    if (!p) return;
+
+    currentReportCategory = categoryKey;
+
+    const viewCat = document.getElementById('repViewCategories');
+    const viewDet = document.getElementById('repViewDetails');
+    const viewSuc = document.getElementById('repViewSuccessPrompt');
+    const btnBack = document.getElementById('btnRepSheetBack');
+    const detailTitle = document.getElementById('repDetailTitle');
+    const scrollContainer = document.getElementById('repSheetScroll');
+
+    if (viewCat) viewCat.style.display = 'none';
+    if (viewDet) viewDet.style.display = 'block';
+    if (viewSuc) viewSuc.style.display = 'none';
+    if (btnBack) btnBack.style.display = 'inline-flex';
+    if (scrollContainer) scrollContainer.scrollTop = 0;
+
+    // Hide all detail sections
+    ['section_WRONG_CONTENT', 'section_WRONG_CATEGORY', 'section_WRONG_IMAGE', 'section_DISCONTINUED', 'section_OTHER'].forEach(id => {
+        const sec = document.getElementById(id);
+        if (sec) sec.style.display = 'none';
+    });
+
+    // Show selected section and populate contextual data
+    if (categoryKey === 'WRONG_CONTENT') {
+        if (detailTitle) detailTitle.innerText = 'اصلاح متن و محتوای محصول';
+        const sec = document.getElementById('section_WRONG_CONTENT');
+        if (sec) sec.style.display = 'block';
+
+        populateContentForm(p);
+        switchContentChapter(currentContentChapter || 'chap_basic');
+
+    } else if (categoryKey === 'WRONG_CATEGORY') {
+        if (detailTitle) detailTitle.innerText = 'اصلاح گروه کسب‌وکار یا دسته‌بندی';
+        const sec = document.getElementById('section_WRONG_CATEGORY');
+        if (sec) sec.style.display = 'block';
+
+        populateCategorySubform(p);
+
+    } else if (categoryKey === 'WRONG_IMAGE') {
+        if (detailTitle) detailTitle.innerText = 'جایگزینی یا ارسال تصویر محصول';
+        const sec = document.getElementById('section_WRONG_IMAGE');
+        if (sec) sec.style.display = 'block';
+
+        populateImageSubform(p);
+
+    } else if (categoryKey === 'DISCONTINUED') {
+        if (detailTitle) detailTitle.innerText = 'گزارش توقف تولید محصول (Discontinued)';
+        const sec = document.getElementById('section_DISCONTINUED');
+        if (sec) sec.style.display = 'block';
+
+        const chk = document.getElementById('repCheckDiscontinued');
+        if (chk) chk.checked = true;
+
+    } else if (categoryKey === 'OTHER') {
+        if (detailTitle) detailTitle.innerText = 'سایر پیشنهادات و نکات تکمیلی';
+        const sec = document.getElementById('section_OTHER');
+        if (sec) sec.style.display = 'block';
     }
-    updateSubformsVisibility();
+
+    setSubmitButtonState('idle');
 }
 
 /**
- * Updates visibility of Step 2 subforms based on active selected issues.
+ * Navigation back to Step 1 (Survey Categories).
  */
-function updateSubformsVisibility() {
-    const allIssueKeys = [
-        'WRONG_CATEGORY',
-        'WRONG_IMAGE',
-        'WRONG_BASIC_INFO',
-        'WRONG_NUTRITION',
-        'WRONG_SALES_PITCH',
-        'WRONG_TMR_OPS',
-        'WRONG_NEGOTIATION',
-        'DISCONTINUED_OR_OTHER'
-    ];
+function goBackToCategoriesView() {
+    const viewCat = document.getElementById('repViewCategories');
+    const viewDet = document.getElementById('repViewDetails');
+    const viewSuc = document.getElementById('repViewSuccessPrompt');
+    const btnBack = document.getElementById('btnRepSheetBack');
+    const scrollContainer = document.getElementById('repSheetScroll');
 
-    const emptyHint = document.getElementById('repEmptyHint');
-    if (emptyHint) {
-        emptyHint.style.display = selectedIssues.size === 0 ? 'block' : 'none';
-    }
+    if (viewCat) viewCat.style.display = 'block';
+    if (viewDet) viewDet.style.display = 'none';
+    if (viewSuc) viewSuc.style.display = 'none';
+    if (btnBack) btnBack.style.display = 'none';
+    if (scrollContainer) scrollContainer.scrollTop = 0;
 
-    allIssueKeys.forEach(key => {
-        const subform = document.getElementById(`subform_${key}`);
-        if (subform) {
-            subform.style.display = selectedIssues.has(key) ? 'block' : 'none';
+    currentReportCategory = null;
+}
+
+/**
+ * Switching content chapters in Step 2 for WRONG_CONTENT.
+ */
+function switchContentChapter(chapId) {
+    currentContentChapter = chapId;
+
+    // Update tab button styles
+    document.querySelectorAll('.rep-chap-btn').forEach(btn => {
+        if (btn.getAttribute('data-chap') === chapId) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
         }
     });
+
+    // Update pane visibility
+    const panes = ['chap_basic', 'chap_pitch', 'chap_ops', 'chap_nutrition', 'chap_negotiation'];
+    panes.forEach(paneName => {
+        const pane = document.getElementById(`pane_${paneName}`);
+        if (pane) {
+            if (paneName === chapId) {
+                pane.style.display = 'block';
+                pane.classList.add('active');
+            } else {
+                pane.style.display = 'none';
+                pane.classList.remove('active');
+            }
+        }
+    });
+}
+
+/**
+ * Populates all WRONG_CONTENT sections and bullets from active product.
+ */
+function populateContentForm(p) {
+    // 1. Basic Info Badges & Inputs
+    const setBadge = (id, val) => {
+        const el = document.getElementById(id);
+        if (el) el.innerText = val || '-';
+    };
+
+    setBadge('repCurTitleBadge', p.title || p.product_name_raw);
+    setBadge('repCurWeightsBadge', p.weights);
+    setBadge('repCurSkuBadge', p.sku);
+    setBadge('repCurSloganBadge', p.slogan);
+
+    // 2. Sales Pitch Bullets
+    renderBulletInputs('claims', p.claims);
+    renderBulletInputs('targets', p.targets);
+
+    // 3. TMR Ops Bullets
+    renderBulletInputs('tips', p.tips);
+    renderBulletInputs('sampling', p.sampling);
+    renderBulletInputs('plano', p.plano);
+
+    // 4. Nutrition
+    const setCurNutri = (id, val) => {
+        const el = document.getElementById(id);
+        if (el) el.innerText = `(${val || '-'})`;
+    };
+    setCurNutri('repCurEnergy', p.energy);
+    setCurNutri('repCurProtein', p.protein ? `${p.protein}g` : '-');
+    setCurNutri('repCurFat', p.fat ? `${p.fat}g` : '-');
+    setCurNutri('repCurSugar', p.sugar ? `${p.sugar}g` : '-');
+    setCurNutri('repCurSalt', p.salt ? `${p.salt}g` : '-');
+    setCurNutri('repCurShelfLife', p.shelf_life);
+    setBadge('repCurIngredientsBadge', p.ingredients);
+
+    // 5. Negotiation
+    setBadge('repCurCompetitorBadge', p.competitor);
+    renderBulletInputs('negotiation', p.negotiation);
+}
+
+/**
+ * Converts bullet arrays or pipe-strings to individual isolated input boxes.
+ */
+function renderBulletInputs(field, data) {
+    const container = document.getElementById(`repBulletsList_${field}`);
+    if (!container) return;
+
+    let items = [];
+    if (Array.isArray(data)) {
+        items = data.map(s => String(s).trim()).filter(Boolean);
+    } else if (typeof data === 'string' && data.trim()) {
+        items = data.split(/[\r\n|]+/).map(s => s.trim()).filter(Boolean);
+    }
+
+    if (items.length === 0) {
+        items = [''];
+    }
+
+    container.innerHTML = items.map((val, idx) => `
+        <div class="rep-bullet-item">
+            <span class="rep-bullet-num">مورد ${idx + 1}</span>
+            <input type="text" class="rep-input rep-bullet-input" value="${escapeHtml(val)}" placeholder="متن سطر ${idx + 1}...">
+            <button type="button" class="btn-remove-bullet" onclick="removeBulletInput('${field}', this)" title="حذف این سطر">✕</button>
+        </div>
+    `).join('');
+}
+
+/**
+ * Dynamically appends a new bullet item to the field's container.
+ */
+function addBulletInput(field) {
+    const container = document.getElementById(`repBulletsList_${field}`);
+    if (!container) return;
+
+    const count = container.querySelectorAll('.rep-bullet-item').length + 1;
+    const item = document.createElement('div');
+    item.className = 'rep-bullet-item';
+    item.innerHTML = `
+        <span class="rep-bullet-num">مورد ${count}</span>
+        <input type="text" class="rep-input rep-bullet-input" value="" placeholder="متن سطر ${count}...">
+        <button type="button" class="btn-remove-bullet" onclick="removeBulletInput('${field}', this)" title="حذف این سطر">✕</button>
+    `;
+    container.appendChild(item);
+
+    const input = item.querySelector('input');
+    if (input) input.focus();
+}
+
+/**
+ * Removes a bullet item and re-indexes the numbers.
+ */
+function removeBulletInput(field, btn) {
+    const container = document.getElementById(`repBulletsList_${field}`);
+    if (!container) return;
+
+    const item = btn.closest('.rep-bullet-item');
+    if (item) item.remove();
+
+    // Renumber remaining items
+    const items = container.querySelectorAll('.rep-bullet-item');
+    if (items.length === 0) {
+        // Always keep at least one row
+        addBulletInput(field);
+        return;
+    }
+
+    items.forEach((it, idx) => {
+        const num = it.querySelector('.rep-bullet-num');
+        if (num) num.innerText = `مورد ${idx + 1}`;
+    });
+}
+
+/**
+ * Collects values from individual bullet input boxes and joins with ' | '.
+ */
+function collectBulletValues(field) {
+    const container = document.getElementById(`repBulletsList_${field}`);
+    if (!container) return '';
+
+    const inputs = container.querySelectorAll('.rep-bullet-input');
+    const values = [];
+    inputs.forEach(inp => {
+        const v = inp.value.trim();
+        if (v) values.push(v);
+    });
+
+    return values.join(' | ');
+}
+
+function escapeHtml(str) {
+    if (!str) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
 }
 
 /**
@@ -1385,316 +1642,6 @@ function removeReportImage() {
 }
 
 /**
- * Subform 3: Populate Basic Info
- */
-function populateBasicInfoSubform(p) {
-    const curTitle = document.getElementById('repCurTitleBadge');
-    const curWeights = document.getElementById('repCurWeightsBadge');
-    const curSku = document.getElementById('repCurSkuBadge');
-
-    if (curTitle) curTitle.innerText = p.title || p.product_name_raw || '-';
-    if (curWeights) curWeights.innerText = p.weights || '-';
-    if (curSku) curSku.innerText = p.sku || '-';
-
-    const inTitle = document.getElementById('repInputTitle');
-    const inWeights = document.getElementById('repInputWeights');
-    const inSku = document.getElementById('repInputSku');
-
-    if (inTitle) inTitle.value = '';
-    if (inWeights) inWeights.value = '';
-    if (inSku) inSku.value = '';
-}
-
-/**
- * Subform 4: Populate Nutrition & Ingredients
- */
-function populateNutritionSubform(p) {
-    const setCur = (id, val) => {
-        const el = document.getElementById(id);
-        if (el) el.innerText = `(${val || '-'})`;
-    };
-
-    setCur('repCurEnergy', p.energy);
-    setCur('repCurProtein', p.protein ? `${p.protein}g` : '-');
-    setCur('repCurFat', p.fat ? `${p.fat}g` : '-');
-    setCur('repCurSugar', p.sugar ? `${p.sugar}g` : '-');
-    setCur('repCurSalt', p.salt ? `${p.salt}g` : '-');
-    setCur('repCurShelfLife', p.shelf_life);
-
-    const curIng = document.getElementById('repCurIngredientsBadge');
-    if (curIng) curIng.innerText = p.ingredients || '-';
-
-    ['Energy', 'Protein', 'Fat', 'Sugar', 'Salt', 'ShelfLife'].forEach(key => {
-        const input = document.getElementById(`repInput${key}`);
-        if (input) input.value = '';
-    });
-
-    const inIng = document.getElementById('repInputIngredients');
-    if (inIng) inIng.value = '';
-}
-
-/**
- * Subform 5: Populate Sales Pitch (Slogan, Claims, Targets)
- */
-function populateSalesPitchSubform(p) {
-    const curSlogan = document.getElementById('repCurSloganBadge');
-    if (curSlogan) curSlogan.innerText = p.slogan || '-';
-
-    const inSlogan = document.getElementById('repInputSlogan');
-    const inClaims = document.getElementById('repInputClaims');
-    const inTargets = document.getElementById('repInputTargets');
-
-    if (inSlogan) inSlogan.value = '';
-    if (inClaims) inClaims.value = Array.isArray(p.claims) ? p.claims.join(' | ') : (p.claims || '');
-    if (inTargets) inTargets.value = Array.isArray(p.targets) ? p.targets.join(' | ') : (p.targets || '');
-}
-
-/**
- * Subform 6: Populate TMR Operations (Tips, Sampling, Plano)
- */
-function populateTmrOpsSubform(p) {
-    const inTips = document.getElementById('repInputTips');
-    const inSampling = document.getElementById('repInputSampling');
-    const inPlano = document.getElementById('repInputPlano');
-
-    if (inTips) inTips.value = Array.isArray(p.tips) ? p.tips.join(' | ') : (p.tips || '');
-    if (inSampling) inSampling.value = Array.isArray(p.sampling) ? p.sampling.join(' | ') : (p.sampling || '');
-    if (inPlano) inPlano.value = Array.isArray(p.plano) ? p.plano.join(' | ') : (p.plano || '');
-}
-
-/**
- * Subform 7: Populate Negotiation & Competitor
- */
-function populateNegotiationSubform(p) {
-    const inComp = document.getElementById('repInputCompetitor');
-    const inNeg = document.getElementById('repInputNegotiation');
-
-    if (inComp) inComp.value = p.competitor || '';
-    if (inNeg) {
-        if (Array.isArray(p.negotiation)) {
-            inNeg.value = p.negotiation.join(' | ');
-        } else {
-            inNeg.value = p.negotiation || '';
-        }
-    }
-}
-
-/**
- * Subform 8: Populate Discontinued & Other
- */
-function populateDiscontinuedSubform(p) {
-    const chk = document.getElementById('repCheckDiscontinued');
-    const notes = document.getElementById('repInputOtherNotes');
-    if (chk) chk.checked = false;
-    if (notes) notes.value = '';
-}
-
-/**
- * Helper to split text by pipe or newline and rejoin with standard pipe format
- */
-function formatPipeString(text) {
-    if (!text) return '';
-    return text.split(/[\r\n|]+/)
-        .map(s => s.trim())
-        .filter(Boolean)
-        .join(' | ');
-}
-
-/**
- * Assembles the full, structured JSON payload matching the target specification.
- */
-function buildReportPayload() {
-    const p = activeReportProduct;
-    if (!p) return null;
-
-    const problemText = (document.getElementById('repProblemText')?.value || '').trim();
-    const issueTypes = Array.from(selectedIssues);
-
-    const payload = {
-        report_id: `REP-${Date.now()}-${p.id || '0'}`,
-        timestamp: new Date().toISOString(),
-        status: 'PENDING',
-        product_id: Number(p.id) || p.id,
-        sku: p.sku || '',
-        product_name_raw: p.title || p.product_name_raw || '',
-        current_business_unit: p.business || '',
-        current_category_id: Number(p.category_id) || (p.category_id !== undefined ? p.category_id : null),
-        current_category_name: p.category_name || '',
-        issue_types: issueTypes,
-        problem_text: problemText,
-        target_csv_columns: [],
-        current_values_json: {},
-        suggested_replacements_json: {},
-        image_replacement: {
-            has_image: currentReportImage.hasImage,
-            mime_type: currentReportImage.mimeType,
-            filename: currentReportImage.filename,
-            base64_data: currentReportImage.base64Data
-        }
-    };
-
-    // 1. Process WRONG_CATEGORY
-    if (selectedIssues.has('WRONG_CATEGORY')) {
-        const buSelect = document.getElementById('repSelectBU');
-        const catSelect = document.getElementById('repSelectCategory');
-        const customCat = (document.getElementById('repCustomCategoryInput')?.value || '').trim();
-        const selBU = buSelect?.value || '';
-        const selCatVal = catSelect?.value || '';
-        const selCatOption = catSelect?.selectedOptions ? catSelect.selectedOptions[0] : null;
-        const selCatName = selCatOption ? selCatOption.getAttribute('data-name') || selCatVal : '';
-
-        payload.target_csv_columns.push('category_id');
-        payload.current_values_json['category_id'] = p.category_id;
-        payload.current_values_json['business_unit'] = p.business;
-
-        payload.suggested_replacements_json['business_unit'] = selBU;
-        payload.suggested_replacements_json['category_id'] = (selCatVal && selCatVal !== 'OTHER') ? (Number(selCatVal) || selCatVal) : 'OTHER';
-        payload.suggested_replacements_json['category_name'] = selCatName;
-        payload.suggested_replacements_json['custom_category_other'] = customCat;
-    }
-
-    // 2. Process WRONG_IMAGE
-    if (selectedIssues.has('WRONG_IMAGE') && currentReportImage.hasImage) {
-        payload.target_csv_columns.push('image_urls');
-        payload.current_values_json['image_urls'] = p.image || '';
-    }
-
-    // 3. Process WRONG_BASIC_INFO
-    if (selectedIssues.has('WRONG_BASIC_INFO')) {
-        const inTitle = (document.getElementById('repInputTitle')?.value || '').trim();
-        const inWeights = (document.getElementById('repInputWeights')?.value || '').trim();
-        const inSku = (document.getElementById('repInputSku')?.value || '').trim();
-
-        if (inTitle) {
-            payload.target_csv_columns.push('product_name_raw');
-            payload.current_values_json['product_name_raw'] = p.title || p.product_name_raw;
-            payload.suggested_replacements_json['product_name_raw'] = inTitle;
-        }
-        if (inWeights) {
-            payload.target_csv_columns.push('weights');
-            payload.current_values_json['weights'] = p.weights;
-            payload.suggested_replacements_json['weights'] = inWeights;
-        }
-        if (inSku) {
-            payload.target_csv_columns.push('sku');
-            payload.current_values_json['sku'] = p.sku;
-            payload.suggested_replacements_json['sku'] = inSku;
-        }
-    }
-
-    // 4. Process WRONG_NUTRITION
-    if (selectedIssues.has('WRONG_NUTRITION')) {
-        const nutriMap = [
-            { col: 'energy', id: 'repInputEnergy' },
-            { col: 'protein', id: 'repInputProtein' },
-            { col: 'fat', id: 'repInputFat' },
-            { col: 'sugar', id: 'repInputSugar' },
-            { col: 'salt', id: 'repInputSalt' },
-            { col: 'shelf_life', id: 'repInputShelfLife' }
-        ];
-
-        nutriMap.forEach(({ col, id }) => {
-            const val = (document.getElementById(id)?.value || '').trim();
-            if (val) {
-                payload.target_csv_columns.push(col);
-                payload.current_values_json[col] = p[col] || '';
-                payload.suggested_replacements_json[col] = val;
-            }
-        });
-
-        const inIng = (document.getElementById('repInputIngredients')?.value || '').trim();
-        if (inIng) {
-            payload.target_csv_columns.push('ingredients');
-            payload.current_values_json['ingredients'] = p.ingredients || '';
-            payload.suggested_replacements_json['ingredients'] = inIng;
-        }
-    }
-
-    // 5. Process WRONG_SALES_PITCH
-    if (selectedIssues.has('WRONG_SALES_PITCH')) {
-        const inSlogan = (document.getElementById('repInputSlogan')?.value || '').trim();
-        const inClaims = formatPipeString(document.getElementById('repInputClaims')?.value);
-        const inTargets = formatPipeString(document.getElementById('repInputTargets')?.value);
-
-        if (inSlogan) {
-            payload.target_csv_columns.push('slogan');
-            payload.current_values_json['slogan'] = p.slogan || '';
-            payload.suggested_replacements_json['slogan'] = inSlogan;
-        }
-        if (inClaims) {
-            payload.target_csv_columns.push('claims');
-            payload.current_values_json['claims'] = Array.isArray(p.claims) ? p.claims.join(' | ') : (p.claims || '');
-            payload.suggested_replacements_json['claims'] = inClaims;
-        }
-        if (inTargets) {
-            payload.target_csv_columns.push('targets');
-            payload.current_values_json['targets'] = Array.isArray(p.targets) ? p.targets.join(' | ') : (p.targets || '');
-            payload.suggested_replacements_json['targets'] = inTargets;
-        }
-    }
-
-    // 6. Process WRONG_TMR_OPS
-    if (selectedIssues.has('WRONG_TMR_OPS')) {
-        const inTips = formatPipeString(document.getElementById('repInputTips')?.value);
-        const inSampling = formatPipeString(document.getElementById('repInputSampling')?.value);
-        const inPlano = formatPipeString(document.getElementById('repInputPlano')?.value);
-
-        if (inTips) {
-            payload.target_csv_columns.push('tips');
-            payload.current_values_json['tips'] = Array.isArray(p.tips) ? p.tips.join(' | ') : (p.tips || '');
-            payload.suggested_replacements_json['tips'] = inTips;
-        }
-        if (inSampling) {
-            payload.target_csv_columns.push('sampling');
-            payload.current_values_json['sampling'] = Array.isArray(p.sampling) ? p.sampling.join(' | ') : (p.sampling || '');
-            payload.suggested_replacements_json['sampling'] = inSampling;
-        }
-        if (inPlano) {
-            payload.target_csv_columns.push('plano');
-            payload.current_values_json['plano'] = Array.isArray(p.plano) ? p.plano.join(' | ') : (p.plano || '');
-            payload.suggested_replacements_json['plano'] = inPlano;
-        }
-    }
-
-    // 7. Process WRONG_NEGOTIATION
-    if (selectedIssues.has('WRONG_NEGOTIATION')) {
-        const inComp = (document.getElementById('repInputCompetitor')?.value || '').trim();
-        const inNeg = formatPipeString(document.getElementById('repInputNegotiation')?.value);
-
-        if (inComp) {
-            payload.target_csv_columns.push('competitor');
-            payload.current_values_json['competitor'] = p.competitor || '';
-            payload.suggested_replacements_json['competitor'] = inComp;
-        }
-        if (inNeg) {
-            payload.target_csv_columns.push('negotiation');
-            payload.current_values_json['negotiation'] = Array.isArray(p.negotiation) ? p.negotiation.join(' | ') : (p.negotiation || '');
-            payload.suggested_replacements_json['negotiation'] = inNeg;
-        }
-    }
-
-    // 8. Process DISCONTINUED_OR_OTHER
-    if (selectedIssues.has('DISCONTINUED_OR_OTHER')) {
-        const isDiscontinued = document.getElementById('repCheckDiscontinued')?.checked;
-        const otherNotes = (document.getElementById('repInputOtherNotes')?.value || '').trim();
-
-        if (isDiscontinued) {
-            payload.target_csv_columns.push('status');
-            payload.current_values_json['is_discontinued'] = false;
-            payload.suggested_replacements_json['is_discontinued'] = true;
-        }
-        if (otherNotes) {
-            payload.suggested_replacements_json['other_notes'] = otherNotes;
-        }
-    }
-
-    // Deduplicate target CSV columns
-    payload.target_csv_columns = Array.from(new Set(payload.target_csv_columns));
-
-    return payload;
-}
-
-/**
  * Offline Queue Utilities
  */
 function getPendingReports() {
@@ -1770,7 +1717,6 @@ window.addEventListener('online', () => {
  * Dispatches payload to Webhook or queues offline if network fails.
  */
 async function sendReportPayload(payload) {
-    // If browser is explicitly offline
     if (!navigator.onLine) {
         queueOfflineReport(payload);
         return {
@@ -1783,7 +1729,6 @@ async function sendReportPayload(payload) {
     const isPlaceholderUrl = !REPORT_WEBHOOK_URL || REPORT_WEBHOOK_URL.includes('placeholder');
 
     if (isPlaceholderUrl) {
-        // Save in queue / local archive in demo mode
         queueOfflineReport(payload);
         console.log('[TMR Report System - Demo Mode] Payload generated & saved locally:', payload);
         return {
@@ -1840,30 +1785,231 @@ function setSubmitButtonState(state) {
     } else {
         btn.disabled = false;
         icon.innerText = '📤';
-        text.innerText = 'ارسال گزارش اصلاح';
+        text.innerText = 'ارسال این گزارش';
     }
 }
 
 /**
- * Main Report Submission Handler
+ * Submits the single active report and transitions to Step 3 (Survey Loop Prompt).
  */
-async function submitReport() {
+async function submitSingleReport() {
     if (!activeReportProduct) {
         showToast('خطا: محصولی انتخاب نشده است.', 'error');
         return;
     }
 
-    const problemText = (document.getElementById('repProblemText')?.value || '').trim();
-
-    // Validation: Require either at least one issue chip OR problem description
-    if (selectedIssues.size === 0 && !problemText) {
-        showToast('لطفاً حداقل یکی از گزینه‌های نقص اطلاعات را انتخاب نموده یا توضیحی بنویسید.', 'warning');
+    if (!currentReportCategory) {
+        showToast('لطفاً نوع گزارش را مشخص فرمایید.', 'warning');
         return;
     }
 
-    const payload = buildReportPayload();
-    if (!payload) {
-        showToast('خطا در پردازش اطلاعات گزارش.', 'error');
+    const p = activeReportProduct;
+    const problemText = (document.getElementById('repProblemText')?.value || '').trim();
+
+    const payload = {
+        report_id: `REP-${Date.now()}-${p.id || '0'}`,
+        timestamp: new Date().toISOString(),
+        status: 'PENDING',
+        product_id: Number(p.id) || p.id,
+        sku: p.sku || '',
+        product_name_raw: p.title || p.product_name_raw || '',
+        current_business_unit: p.business || '',
+        current_category_id: Number(p.category_id) || (p.category_id !== undefined ? p.category_id : null),
+        current_category_name: p.category_name || '',
+        issue_types: [currentReportCategory],
+        content_chapter: currentReportCategory === 'WRONG_CONTENT' ? currentContentChapter : null,
+        problem_text: problemText,
+        target_csv_columns: [],
+        current_values_json: {},
+        suggested_replacements_json: {},
+        image_replacement: {
+            has_image: currentReportCategory === 'WRONG_IMAGE' && currentReportImage.hasImage,
+            mime_type: currentReportImage.mimeType,
+            filename: currentReportImage.filename,
+            base64_data: currentReportImage.base64Data
+        }
+    };
+
+    let hasValidInput = false;
+
+    // Collect data per category
+    if (currentReportCategory === 'WRONG_CONTENT') {
+        // Chapter 1: Basic
+        const inTitle = (document.getElementById('repInputTitle')?.value || '').trim();
+        const inWeights = (document.getElementById('repInputWeights')?.value || '').trim();
+        const inSku = (document.getElementById('repInputSku')?.value || '').trim();
+        const inSlogan = (document.getElementById('repInputSlogan')?.value || '').trim();
+
+        if (inTitle) {
+            payload.target_csv_columns.push('product_name_raw');
+            payload.current_values_json['product_name_raw'] = p.title || p.product_name_raw;
+            payload.suggested_replacements_json['product_name_raw'] = inTitle;
+            hasValidInput = true;
+        }
+        if (inWeights) {
+            payload.target_csv_columns.push('weights');
+            payload.current_values_json['weights'] = p.weights;
+            payload.suggested_replacements_json['weights'] = inWeights;
+            hasValidInput = true;
+        }
+        if (inSku) {
+            payload.target_csv_columns.push('sku');
+            payload.current_values_json['sku'] = p.sku;
+            payload.suggested_replacements_json['sku'] = inSku;
+            hasValidInput = true;
+        }
+        if (inSlogan) {
+            payload.target_csv_columns.push('slogan');
+            payload.current_values_json['slogan'] = p.slogan || '';
+            payload.suggested_replacements_json['slogan'] = inSlogan;
+            hasValidInput = true;
+        }
+
+        // Chapter 2: Pitch (Isolated bullet boxes)
+        const claimsVal = collectBulletValues('claims');
+        const origClaims = Array.isArray(p.claims) ? p.claims.join(' | ') : (p.claims || '');
+        if (claimsVal && claimsVal !== origClaims) {
+            payload.target_csv_columns.push('claims');
+            payload.current_values_json['claims'] = origClaims;
+            payload.suggested_replacements_json['claims'] = claimsVal;
+            hasValidInput = true;
+        }
+
+        const targetsVal = collectBulletValues('targets');
+        const origTargets = Array.isArray(p.targets) ? p.targets.join(' | ') : (p.targets || '');
+        if (targetsVal && targetsVal !== origTargets) {
+            payload.target_csv_columns.push('targets');
+            payload.current_values_json['targets'] = origTargets;
+            payload.suggested_replacements_json['targets'] = targetsVal;
+            hasValidInput = true;
+        }
+
+        // Chapter 3: Ops (Isolated bullet boxes)
+        const tipsVal = collectBulletValues('tips');
+        const origTips = Array.isArray(p.tips) ? p.tips.join(' | ') : (p.tips || '');
+        if (tipsVal && tipsVal !== origTips) {
+            payload.target_csv_columns.push('tips');
+            payload.current_values_json['tips'] = origTips;
+            payload.suggested_replacements_json['tips'] = tipsVal;
+            hasValidInput = true;
+        }
+
+        const samplingVal = collectBulletValues('sampling');
+        const origSampling = Array.isArray(p.sampling) ? p.sampling.join(' | ') : (p.sampling || '');
+        if (samplingVal && samplingVal !== origSampling) {
+            payload.target_csv_columns.push('sampling');
+            payload.current_values_json['sampling'] = origSampling;
+            payload.suggested_replacements_json['sampling'] = samplingVal;
+            hasValidInput = true;
+        }
+
+        const planoVal = collectBulletValues('plano');
+        const origPlano = Array.isArray(p.plano) ? p.plano.join(' | ') : (p.plano || '');
+        if (planoVal && planoVal !== origPlano) {
+            payload.target_csv_columns.push('plano');
+            payload.current_values_json['plano'] = origPlano;
+            payload.suggested_replacements_json['plano'] = planoVal;
+            hasValidInput = true;
+        }
+
+        // Chapter 4: Nutrition
+        const nutriMap = [
+            { col: 'energy', id: 'repInputEnergy' },
+            { col: 'protein', id: 'repInputProtein' },
+            { col: 'fat', id: 'repInputFat' },
+            { col: 'sugar', id: 'repInputSugar' },
+            { col: 'salt', id: 'repInputSalt' },
+            { col: 'shelf_life', id: 'repInputShelfLife' }
+        ];
+        nutriMap.forEach(({ col, id }) => {
+            const val = (document.getElementById(id)?.value || '').trim();
+            if (val) {
+                payload.target_csv_columns.push(col);
+                payload.current_values_json[col] = p[col] || '';
+                payload.suggested_replacements_json[col] = val;
+                hasValidInput = true;
+            }
+        });
+
+        const inIng = (document.getElementById('repInputIngredients')?.value || '').trim();
+        if (inIng) {
+            payload.target_csv_columns.push('ingredients');
+            payload.current_values_json['ingredients'] = p.ingredients || '';
+            payload.suggested_replacements_json['ingredients'] = inIng;
+            hasValidInput = true;
+        }
+
+        // Chapter 5: Negotiation
+        const inComp = (document.getElementById('repInputCompetitor')?.value || '').trim();
+        if (inComp) {
+            payload.target_csv_columns.push('competitor');
+            payload.current_values_json['competitor'] = p.competitor || '';
+            payload.suggested_replacements_json['competitor'] = inComp;
+            hasValidInput = true;
+        }
+
+        const negVal = collectBulletValues('negotiation');
+        const origNeg = Array.isArray(p.negotiation) ? p.negotiation.join(' | ') : (p.negotiation || '');
+        if (negVal && negVal !== origNeg) {
+            payload.target_csv_columns.push('negotiation');
+            payload.current_values_json['negotiation'] = origNeg;
+            payload.suggested_replacements_json['negotiation'] = negVal;
+            hasValidInput = true;
+        }
+
+    } else if (currentReportCategory === 'WRONG_CATEGORY') {
+        const buSelect = document.getElementById('repSelectBU');
+        const catSelect = document.getElementById('repSelectCategory');
+        const customCat = (document.getElementById('repCustomCategoryInput')?.value || '').trim();
+        const selBU = buSelect?.value || '';
+        const selCatVal = catSelect?.value || '';
+        const selCatOption = catSelect?.selectedOptions ? catSelect.selectedOptions[0] : null;
+        const selCatName = selCatOption ? selCatOption.getAttribute('data-name') || selCatVal : '';
+
+        payload.target_csv_columns.push('category_id');
+        payload.current_values_json['category_id'] = p.category_id;
+        payload.current_values_json['business_unit'] = p.business;
+
+        payload.suggested_replacements_json['business_unit'] = selBU;
+        payload.suggested_replacements_json['category_id'] = (selCatVal && selCatVal !== 'OTHER') ? (Number(selCatVal) || selCatVal) : 'OTHER';
+        payload.suggested_replacements_json['category_name'] = selCatName;
+        payload.suggested_replacements_json['custom_category_other'] = customCat;
+
+        if (selBU || selCatVal || customCat) {
+            hasValidInput = true;
+        }
+
+    } else if (currentReportCategory === 'WRONG_IMAGE') {
+        if (currentReportImage.hasImage) {
+            payload.target_csv_columns.push('image_urls');
+            payload.current_values_json['image_urls'] = p.image || '';
+            hasValidInput = true;
+        }
+
+    } else if (currentReportCategory === 'DISCONTINUED') {
+        const isDiscontinued = document.getElementById('repCheckDiscontinued')?.checked;
+        const discNotes = (document.getElementById('repInputDiscontinuedNotes')?.value || '').trim();
+
+        payload.target_csv_columns.push('status');
+        payload.current_values_json['is_discontinued'] = false;
+        payload.suggested_replacements_json['is_discontinued'] = Boolean(isDiscontinued);
+        if (discNotes) {
+            payload.suggested_replacements_json['discontinued_notes'] = discNotes;
+        }
+        hasValidInput = true;
+
+    } else if (currentReportCategory === 'OTHER') {
+        const otherNotes = (document.getElementById('repInputOtherNotes')?.value || '').trim();
+        if (otherNotes) {
+            payload.target_csv_columns.push('other_notes');
+            payload.suggested_replacements_json['other_notes'] = otherNotes;
+            hasValidInput = true;
+        }
+    }
+
+    // Require either a suggested correction or an explanation
+    if (!hasValidInput && !problemText) {
+        showToast('لطفاً مقدار اصلاحی را وارد کرده یا در بخش توضیحات علت را بنویسید.', 'warning');
         return;
     }
 
@@ -1871,16 +2017,67 @@ async function submitReport() {
 
     try {
         const result = await sendReportPayload(payload);
-        setSubmitButtonState('success');
-        showToast(result.message, result.offline ? 'warning' : 'success', 4000);
+        setSubmitButtonState('idle');
 
-        setTimeout(() => {
-            closeReportModal();
-        }, 1200);
+        // Transition to Step 3: Success & Survey Loop Prompt
+        const viewCat = document.getElementById('repViewCategories');
+        const viewDet = document.getElementById('repViewDetails');
+        const viewSuc = document.getElementById('repViewSuccessPrompt');
+        const btnBack = document.getElementById('btnRepSheetBack');
+        const trackingText = document.getElementById('repSuccessTrackingText');
+        const scrollContainer = document.getElementById('repSheetScroll');
+
+        if (viewCat) viewCat.style.display = 'none';
+        if (viewDet) viewDet.style.display = 'none';
+        if (viewSuc) viewSuc.style.display = 'block';
+        if (btnBack) btnBack.style.display = 'none';
+        if (scrollContainer) scrollContainer.scrollTop = 0;
+
+        if (trackingText) {
+            trackingText.innerText = result.offline
+                ? `گزارش در حافظه آفلاین ثبت شد (کد: ${payload.report_id}) و پس از اتصال اینترنت ارسال خواهد شد.`
+                : `کد پیگیری: ${payload.report_id} | اطلاعات برای تیم بازاریابی و IT ارسال شد.`;
+        }
+
+        showToast('گزارش با موفقیت ثبت گردید.', 'success', 3000);
+
     } catch (err) {
         setSubmitButtonState('idle');
         showToast(`خطا در ثبت گزارش: ${err.message}`, 'error');
     }
+}
+
+// Backward-compatible alias
+const submitReport = submitSingleReport;
+
+/**
+ * Survey Loop: User clicks "بله، ثبت گزارش دیگر برای همین محصول"
+ * Resets form fields and returns to Step 1 without closing or changing product.
+ */
+function startAnotherReportForCurrentProduct() {
+    const p = activeReportProduct;
+    if (!p) {
+        closeReportModal();
+        return;
+    }
+
+    currentReportCategory = null;
+    currentContentChapter = 'chap_basic';
+    resetAllReportInputs();
+
+    const viewCat = document.getElementById('repViewCategories');
+    const viewDet = document.getElementById('repViewDetails');
+    const viewSuc = document.getElementById('repViewSuccessPrompt');
+    const btnBack = document.getElementById('btnRepSheetBack');
+    const scrollContainer = document.getElementById('repSheetScroll');
+
+    if (viewCat) viewCat.style.display = 'block';
+    if (viewDet) viewDet.style.display = 'none';
+    if (viewSuc) viewSuc.style.display = 'none';
+    if (btnBack) btnBack.style.display = 'none';
+    if (scrollContainer) scrollContainer.scrollTop = 0;
+
+    showToast('لطفاً بخش جدید را جهت گزارش انتخاب فرمایید.', 'info', 2000);
 }
 
 document.addEventListener('keydown', (e) => {
