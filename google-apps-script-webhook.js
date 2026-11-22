@@ -29,6 +29,67 @@ function doPost(e) {
     var sheet = ss.getSheetByName("Reports") || ss.getActiveSheet();
     sheet.setName("Reports");
 
+    // =========================================================================
+    // ACTION 1: UPDATE STATUS (Two-Way Sync - Mark as Done/Repaired)
+    // =========================================================================
+    if (data.action === "UPDATE_STATUS" || data.action === "MARK_DONE") {
+      var reportIds = data.report_ids || (data.report_id ? [data.report_id] : []);
+      var newStatus = data.new_status || "DONE / REPAIRED";
+      var note = data.note || "";
+      var values = sheet.getDataRange().getValues();
+      var updated = [];
+
+      // Ensure Column 17 header exists for Action Notes
+      if (values.length > 0 && values[0].length < 17) {
+        sheet.getRange(1, 17).setValue("Action Taken (نتیجه اقدام)").setFontWeight("bold").setBackground("#0f766e").setFontColor("#ffffff");
+      }
+
+      for (var i = 1; i < values.length; i++) {
+        var rowReportId = String(values[i][0]).trim();
+        if (reportIds.indexOf(rowReportId) !== -1) {
+          var rowNum = i + 1;
+          // Set Status in Column 3 with prominent green styling
+          sheet.getRange(rowNum, 3).setValue(newStatus).setBackground("#dcfce7").setFontColor("#166534");
+          // If note provided, set in Column 17
+          if (note) {
+            sheet.getRange(rowNum, 17).setValue(note);
+          }
+          updated.push(rowReportId);
+        }
+      }
+
+      return ContentService.createTextOutput(JSON.stringify({
+        status: "success",
+        action: "UPDATE_STATUS",
+        new_status: newStatus,
+        updated_count: updated.length,
+        updated_report_ids: updated
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
+
+    // =========================================================================
+    // ACTION 2: DELETE TEST REPORTS
+    // =========================================================================
+    if (data.action === "DELETE_TEST_REPORTS") {
+      var values = sheet.getDataRange().getValues();
+      var deleted = 0;
+      for (var i = values.length - 1; i >= 1; i--) {
+        var reportId = String(values[i][0]).trim();
+        if (reportId.indexOf("REP-TEST") !== -1 || reportId.indexOf("REP-179533") !== -1) {
+          sheet.deleteRow(i + 1);
+          deleted++;
+        }
+      }
+      return ContentService.createTextOutput(JSON.stringify({
+        status: "success",
+        action: "DELETE_TEST_REPORTS",
+        deleted_count: deleted
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
+
+    // =========================================================================
+    // DEFAULT ACTION: INSERT NEW REPORT ROW
+    // =========================================================================
     // Initialize Header row if sheet is empty
     if (sheet.getLastRow() === 0) {
       var headers = [
