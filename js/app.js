@@ -1033,7 +1033,7 @@ function handleSearch(query) {
    ========================================================================== */
 
 // Configurable Webhook URL for Google Sheets / Google Apps Script
-const REPORT_WEBHOOK_URL = window.SOLICO_REPORT_WEBHOOK_URL || 'https://script.google.com/macros/s/AKfycbw9_placeholder/exec';
+const REPORT_WEBHOOK_URL = window.SOLICO_REPORT_WEBHOOK_URL || 'https://script.google.com/macros/s/AKfycbw9Tgu6HZfVz0-HWLOJ-c8oRysY515Oi5sLWaLvuoQCUYg17QtW2wmCtiRi7s_AbP__HA/exec';
 const PENDING_REPORTS_KEY = 'solico_tmr_pending_reports';
 
 let activeReportProduct = null;

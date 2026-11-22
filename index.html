@@ -620,7 +620,11 @@
     <!-- Global Toast Container -->
     <div class="app-toast-container" id="appToastContainer"></div>
 
-    <script src="./js/app.js?v=20261122-v16"></script>
+    <!-- Solico Central Webhook Configuration -->
+    <script>
+        window.SOLICO_REPORT_WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw9Tgu6HZfVz0-HWLOJ-c8oRysY515Oi5sLWaLvuoQCUYg17QtW2wmCtiRi7s_AbP__HA/exec';
+    </script>
+    <script src="./js/app.js?v=20261122-v17"></script>
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
