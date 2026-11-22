@@ -130,3 +130,26 @@ function doGet(e) {
     timestamp: new Date().toISOString()
   })).setMimeType(ContentService.MimeType.JSON);
 }
+
+/**
+ * پاکسازی خودکار گزارش‌های تستی
+ * برای اجرا کافی است در ویرایشگر Apps Script این تابع را انتخاب کرده و Run را بزنید
+ */
+function deleteTestReports() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName("Reports") || ss.getActiveSheet();
+  var data = sheet.getDataRange().getValues();
+  var deletedCount = 0;
+
+  // پیمایش از پایین به بالا برای جلوگیری از تغییر اندیس ردیف‌ها
+  for (var i = data.length - 1; i >= 1; i--) {
+    var reportId = String(data[i][0]);
+    if (reportId.indexOf("REP-TEST") !== -1 || reportId.indexOf("REP-179533") !== -1) {
+      sheet.deleteRow(i + 1);
+      deletedCount++;
+    }
+  }
+
+  Logger.log("تعداد ردیف‌های تستی حذف‌شده: " + deletedCount);
+  return deletedCount;
+}
