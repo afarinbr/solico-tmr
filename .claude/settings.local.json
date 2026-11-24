@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm -v)",
+      "Bash(where chrome *)",
+      "Bash(npm ls *)",
+      "Bash(node -e ' *)",
+      "Bash(npm init *)",
+      "Bash(npm i *)",
+      "Bash(npx playwright *)",
+      "Bash(echo \"EXIT:$?\")",
+      "Bash(python -m http.server 8099)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:8099/data/products.json)",
+      "Bash(curl -s -o /dev/null -w \"server:%{http_code}\\\\n\" http://localhost:8099/data/products.json)",
+      "Bash(node shot.js)",
+      "Bash(curl -s -o /dev/null -w \"kalleh:%{http_code} t:%{time_total}\\\\n\" --max-time 15 \"https://kalleh.com/wp-content/uploads/2019/06/jeeto2.png\")",
+      "Bash(curl -s -o /dev/null -w \"bonny:%{http_code} t:%{time_total}\\\\n\" --max-time 15 \"https://api.bonnychow.ir/Files/Doc/896d5ad88c874875a625ea445b16e151.webp\")",
+      "Bash(cd D:\\\\Solico\\\\TM Skills\\\\MVP_Flashcard *)"
+    ]
+  }
+}

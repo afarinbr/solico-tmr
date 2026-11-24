@@ -1,0 +1,9 @@
+{
+  "name": "solico-tmr-offline-build",
+  "private": true,
+  "description": "Build tools for the offline Solico TMR APK (image bundling, data packing).",
+  "type": "module",
+  "dependencies": {
+    "sharp": "0.34.4"
+  }
+}

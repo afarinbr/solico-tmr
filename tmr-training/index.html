@@ -1,0 +1,1158 @@
+﻿<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>سامانه آموزش تعاملی سولیکو کاله</title>
+    <style>
+        @font-face {
+            font-family: 'Vazirmatn';
+            src: url('./fonts/Vazirmatn-Regular.ttf') format('truetype');
+            font-weight: 400;
+            font-display: swap;
+        }
+        @font-face {
+            font-family: 'Vazirmatn';
+            src: url('./fonts/Vazirmatn-Bold.ttf') format('truetype');
+            font-weight: 700;
+            font-display: swap;
+        }
+        @font-face {
+            font-family: 'Vazirmatn';
+            src: url('./fonts/Vazirmatn-Black.ttf') format('truetype');
+            font-weight: 900;
+            font-display: swap;
+        }
+
+        :root {
+            --app-default-primary: #1b2a5e;
+            --app-default-secondary: #4a72c9;
+            --app-default-glow: rgba(74, 114, 201, 0.2);
+
+            --theme-primary: var(--app-default-primary);
+            --theme-secondary: var(--app-default-secondary);
+            --theme-glow: var(--app-default-glow);
+            --theme-gradient: linear-gradient(135deg, var(--theme-primary) 0%, var(--theme-secondary) 100%);
+
+            --bg-page: #eef2f7;
+            --surface: #ffffff;
+            --surface-soft: #f7f9fc;
+            --border-color: #d5dbe7;
+            --header-bg: #071d49;
+            --header-text: #f7f9fc;
+            --text-primary: #1a1f2e;
+            --text-secondary: #606b85;
+            --highlight: #e0a740;
+            --success: #10b981;
+            --radius-lg: 24px;
+            --radius-md: 14px;
+            --radius-sm: 8px;
+        }
+
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Vazirmatn', system-ui, sans-serif;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        body {
+            background-color: var(--bg-page);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 16px 8px;
+        }
+
+        .app-frame {
+            width: 100%;
+            max-width: 480px;
+            min-height: 92vh;
+            background: var(--surface);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            box-shadow: 0 16px 40px rgba(27, 42, 94, 0.08);
+            display: flex;
+            flex-direction: column;
+            padding: 16px 14px;
+            position: relative;
+        }
+
+        /* Persistent Header */
+        .app-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 12px;
+            margin: -16px -14px 12px -14px;
+            background: var(--header-bg);
+            border-bottom: none;
+            border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+        }
+
+
+        .brand-container {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+        }
+
+        .brand-solico {
+            background: #071d49;
+            color: #ffffff;
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-size: 1.05rem;
+            font-weight: 900;
+            line-height: 1;
+        }
+
+        .brand-kalleh {
+            color: #071d49;
+            background: #ffffff;
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-size: 1.05rem;
+            font-weight: 900;
+            line-height: 1;
+        }
+
+
+        .brand-logo-img {
+            height: 30px;
+            max-width: 90px;
+            object-fit: contain;
+            border-radius: 4px;
+        }
+
+        .btn-fav-filter {
+            background: rgba(255, 255, 255, 0.12);
+            border: 1px solid rgba(255, 255, 255, 0.22);
+            color: #ffffff;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.78rem;
+            font-weight: 800;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: 0.2s;
+        }
+
+        .btn-fav-filter.active {
+            background: #e53935;
+            color: #ffffff;
+            border-color: #e53935;
+        }
+
+
+        /* Search */
+        .search-box {
+            position: relative;
+            margin-bottom: 14px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 10px 36px 10px 12px;
+            background: var(--bg-page);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            color: var(--text-primary);
+            font-size: 0.82rem;
+            outline: none;
+        }
+
+        .search-input:focus {
+            border-color: var(--theme-primary);
+            background: #fff;
+            box-shadow: 0 0 0 3px var(--theme-glow);
+        }
+
+        .search-icon {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        /* Views */
+        .view-section {
+            display: none;
+            flex-direction: column;
+            flex: 1;
+        }
+
+        .view-section.active {
+            display: flex;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 12px;
+        }
+
+        .section-header h2 {
+            font-size: 1.1rem;
+            font-weight: 900;
+            color: var(--app-default-primary);
+            margin-bottom: 2px;
+        }
+
+        .section-header p {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        /* Card Grids */
+        .category-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .category-card {
+            background: var(--bg-page);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 14px 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            gap: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .category-card:hover {
+            border-color: var(--theme-primary);
+            background: #ffffff;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 14px var(--theme-glow);
+        }
+
+        .cat-icon {
+            font-size: 2.1rem;
+            line-height: 1;
+        }
+
+        .cat-name {
+            font-size: 0.86rem;
+            font-weight: 800;
+            color: var(--text-primary);
+        }
+
+        .cat-count {
+            font-size: 0.68rem;
+            font-weight: 700;
+            color: var(--text-secondary);
+            background: #ffffff;
+            border: 1px solid var(--border-color);
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+
+        /* Navigation Bar */
+        .top-nav-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            gap: 8px;
+        }
+
+        .btn-back {
+            background: var(--bg-page);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 6px 12px;
+            border-radius: var(--radius-sm);
+            font-size: 0.75rem;
+            font-weight: 800;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .breadcrumb {
+            font-size: 0.78rem;
+            color: var(--theme-primary);
+            font-weight: 800;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .counter-badge {
+            font-size: 0.7rem;
+            font-weight: 800;
+            color: var(--text-secondary);
+            background: var(--bg-page);
+            padding: 3px 8px;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            white-space: nowrap;
+        }
+
+        /* Flashcard Component */
+        .scene {
+            width: 100%;
+            height: 470px;
+            perspective: 1200px;
+            margin-bottom: 12px;
+        }
+
+        .flashcard {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.5s ease;
+            border-radius: var(--radius-lg);
+        }
+
+        .flashcard.flipped {
+            transform: rotateY(180deg);
+        }
+
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 110%;
+            backface-visibility: hidden;
+            border-radius: var(--radius-lg);
+            background: var(--surface);
+            border: 1px solid var(--border-color);
+            box-shadow: 0 8px 24px var(--theme-glow);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Face Front */
+        .front-hero {
+            background: linear-gradient(135deg, var(--theme-primary) 0%, var(--theme-secondary) 100%);
+            color: #ffffff;
+            padding: 12px 10px 10px;
+            border-bottom-left-radius: 14px;
+            border-bottom-right-radius: 14px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            transition: background 0.3s ease;
+        }
+
+        .btn-like {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(255, 255, 255, 0.25);
+            border: none;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            color: #ffffff;
+            font-size: 0.9rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-like.liked {
+            background: #ffffff;
+            color: #e53935;
+        }
+
+        .product-img-box {
+            width: 200px;
+            height: 150px;
+            padding: 5px;
+            margin-bottom: 5px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            background: #ffffff;
+            border-radius: 12px;
+            overflow: hidden; /* prevents image from escaping */
+            box-sizing: border-box;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
+        }
+
+        .product-img-box img {
+            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            object-position: center;
+        }
+
+
+        .p-title { font-size: 0.95rem; font-weight: 900; text-align: center; }
+        .p-slogan { font-size: 0.68rem; opacity: 0.92; text-align: center; }
+
+        .front-content {
+            padding: 10px;
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .info-pill {
+            background: var(--bg-page);
+            border: 1px solid var(--border-color);
+            padding: 5px 8px;
+            border-radius: var(--radius-sm);
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: var(--theme-primary);
+        }
+
+        .section-box {
+            background: var(--bg-page);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            padding: 6px 8px;
+        }
+
+        .section-box-title {
+            font-size: 0.72rem;
+            font-weight: 800;
+            color: var(--theme-primary);
+            margin-bottom: 4px;
+        }
+
+        .claims-ul, .targets-ul {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .claims-ul li {
+            background: #ffffff;
+            border: 1px solid var(--border-color);
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 0.68rem;
+            color: var(--text-primary);
+            line-height: 1.35;
+        }
+
+        .targets-ul li {
+            font-size: 0.68rem;
+            color: var(--text-secondary);
+            padding-right: 8px;
+            position: relative;
+        }
+        .targets-ul li::before {
+            content: "•";
+            color: var(--theme-primary);
+            position: absolute;
+            right: 0;
+            font-weight: 800;
+        }
+
+        /* Face Back */
+        .card-face-back {
+            transform: rotateY(180deg);
+            background: var(--bg-page);
+        }
+
+        .back-top {
+            background: var(--theme-primary);
+            color: #ffffff;
+            padding: 10px;
+            text-align: center;
+            font-size: 0.78rem;
+            font-weight: 800;
+            transition: background 0.3s ease;
+        }
+
+        .back-nav {
+            display: flex;
+            background: #e8ecf5;
+            padding: 3px;
+            gap: 4px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 5px 2px;
+            font-size: 0.68rem;
+            font-weight: 800;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .tab-btn.active {
+            background: #ffffff;
+            color: var(--theme-primary);
+        }
+
+        .back-scroll {
+            padding: 10px;
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .tab-panel {
+            display: none;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .tab-panel.active { display: flex; }
+
+        .tmr-block {
+            background: #ffffff;
+            border: 1px solid var(--border-color);
+            border-right: 3px solid var(--theme-primary);
+            border-radius: var(--radius-sm);
+            padding: 6px 8px;
+        }
+        .tmr-block.gold { border-right-color: var(--highlight); }
+        .tmr-block.green { border-right-color: var(--success); }
+
+        .tmr-block h4 {
+            font-size: 0.72rem;
+            color: var(--text-primary);
+            margin-bottom: 2px;
+        }
+
+        .tmr-block ul {
+            list-style: none;
+            font-size: 0.68rem;
+            color: var(--text-secondary);
+            line-height: 1.35;
+        }
+
+        .nutrition-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 4px;
+        }
+
+        .nutrition-item {
+            background: #ffffff;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 4px;
+            text-align: center;
+        }
+        .nutrition-item .val { font-size: 0.75rem; font-weight: 800; color: var(--theme-primary); }
+        .nutrition-item .lbl { font-size: 0.6rem; color: var(--text-secondary); }
+
+	/* Controls */
+	.controls {
+	    display: flex;
+	    align-items: center;
+	    gap: 8px;
+ 	    width: 100%;
+	    margin-top: 50px; /* دکمه‌ها را پایین‌تر می‌برد */
+	}
+
+        .ctrl-btn {
+            flex: 1;
+            padding: 9px;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-color);
+            background: var(--bg-page);
+            color: var(--text-primary);
+            font-size: 0.78rem;
+            font-weight: 800;
+            cursor: pointer;
+        }
+
+        .ctrl-btn.flip {
+            flex: 1.3;
+            background: var(--theme-primary);
+            border-color: var(--theme-primary);
+            color: #ffffff;
+            box-shadow: 0 4px 12px var(--theme-glow);
+            transition: all 0.2s ease;
+        }
+
+        .empty-view {
+            text-align: center;
+            padding: 40px 10px;
+            color: var(--text-secondary);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-frame" id="appFrame">
+        
+        <!-- Header: Word 'سولیکو' on the right, 'logo_1' on its left -->
+        <header class="app-header">
+            <div class="brand-container" onclick="openHome()">
+                <span class="brand-solico">گروه</span>
+                <span class="brand-kalleh">سولیکو</span>
+            </div>
+            <button class="btn-fav-filter" id="favBtn" onclick="toggleFavOnly()">
+                <span id="favCount">0</span> ❤️
+            </button>
+        </header>
+
+
+        <!-- Search Bar -->
+        <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input type="text" class="search-input" id="globalSearch" placeholder="جستجو در نام، SKU، ویژگی یا دسته‌بندی...">
+        </div>
+
+        <!-- 1. Home View -->
+        <section class="view-section active" id="viewHome">
+            <div class="section-header">
+                <h2>گروه‌های کسب‌وکار</h2>
+                <p>یکی از واحدهای تجاری زیر را انتخاب کنید</p>
+            </div>
+            <div class="category-grid" id="businessGrid"></div>
+        </section>
+
+        <!-- 2. Categories View -->
+        <section class="view-section" id="viewCategories">
+            <div class="top-nav-bar">
+                <button class="btn-back" onclick="openHome()">‹ همه گروه‌ها</button>
+                <div class="breadcrumb" id="catBreadcrumb"></div>
+                <div style="width:20px;"></div>
+            </div>
+            <div class="category-grid" id="categoryGrid"></div>
+        </section>
+
+        <!-- 3. Flashcards View -->
+        <section class="view-section" id="viewFlashcards">
+            <div class="top-nav-bar">
+                <button class="btn-back" id="cardBackBtn" onclick="backFromCards()">‹ دسته‌ها</button>
+                <div class="breadcrumb" id="productBreadcrumb"></div>
+                <div class="counter-badge" id="cardCounter">۱ از ۱</div>
+            </div>
+
+            <div class="scene">
+                <div class="flashcard" id="flashcard">
+                    
+                    <!-- Front -->
+                    <div class="card-face card-face-front">
+                        <div class="front-hero">
+                            <button class="btn-like" id="likeBtn" onclick="toggleCurrentFav()">🤍</button>
+                            <div class="product-img-box">
+                                <img id="f_img" src="" alt="" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'60\' height=\'60\'><text x=\'50%\' y=\'50%\' font-size=\'10\' text-anchor=\'middle\' fill=\'%23888\'>بدون تصویر</text></svg>'">
+                            </div>
+                            <h3 class="p-title" id="f_title"></h3>
+                            <p class="p-slogan" id="f_slogan"></p>
+                        </div>
+
+                        <div class="front-content">
+                            <div class="info-pill">⚖️ اوزان: <span id="f_weights"></span></div>
+                            <div class="section-box">
+                                <div class="section-box-title">✨ جملات کلیدی فروش</div>
+                                <ul class="claims-ul" id="f_claims"></ul>
+                            </div>
+                            <div class="section-box">
+                                <div class="section-box-title">🎯 بازار و مشتریان هدف</div>
+                                <ul class="targets-ul" id="f_targets"></ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Back -->
+                    <div class="card-face card-face-back">
+                        <div class="back-top">اطلاعات فنی و عملیاتی TMR</div>
+                        <div class="back-nav">
+                            <button class="tab-btn active" onclick="switchTab('tab-tmr')">عملیات</button>
+                            <button class="tab-btn" onclick="switchTab('tab-nutrition')">تغذیه</button>
+                            <button class="tab-btn" onclick="switchTab('tab-more')">ترکیبات و رقبا</button>
+                        </div>
+                        <div class="back-scroll">
+                            <div class="tab-panel active" id="tab-tmr">
+                                <div class="tmr-block green">
+                                    <h4>📌 نکات پرزنت</h4>
+                                    <ul id="b_tips"></ul>
+                                </div>
+                                <div class="tmr-block gold">
+                                    <h4>🥄 سناریوی سمپلینگ</h4>
+                                    <ul id="b_sampling"></ul>
+                                </div>
+                                <div class="tmr-block">
+                                    <h4>📐 چیدمان و شلف</h4>
+                                    <ul id="b_plano"></ul>
+                                </div>
+                            </div>
+
+                            <div class="tab-panel" id="tab-nutrition">
+                                <div class="section-box">
+                                    <div class="section-box-title">جدول ارزش تغذیه‌ای</div>
+                                    <div class="nutrition-grid" id="b_nutrition"></div>
+                                </div>
+                            </div>
+
+                            <div class="tab-panel" id="tab-more">
+                                <div class="tmr-block">
+                                    <h4>🥛 ترکیبات اصلی</h4>
+                                    <p id="b_ingredients" style="font-size:0.68rem; color:var(--text-secondary);"></p>
+                                </div>
+                                <div class="tmr-block gold">
+                                    <h4>⚔️ وضعیت در برابر رقبا</h4>
+                                    <p id="b_competitor" style="font-size:0.68rem; color:var(--text-secondary);"></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Controls -->
+            <div class="controls">
+                <button class="ctrl-btn" onclick="prevCard()">❮ قبلی</button>
+                <button class="ctrl-btn flip" onclick="flipCard()">🔄 چرخش کارت</button>
+                <button class="ctrl-btn" onclick="nextCard()">بعدی ❯</button>
+            </div>
+        </section>
+
+        <!-- 4. Empty State -->
+        <section class="view-section" id="viewEmpty">
+            <div class="empty-view">
+                <h3 style="font-size:1rem; margin-bottom:6px;">موردی یافت نشد</h3>
+                <p style="font-size:0.75rem; margin-bottom:14px;" id="emptyMsg">در این دسته‌بندی فعلاً محصولی ثبت نشده است.</p>
+                <button class="btn-back" onclick="openHome()">بازگشت به خانه</button>
+            </div>
+        </section>
+
+    </div>
+
+    <script>
+        const rawProducts = [{"salt":"0.3","id":"1","category_id":"1","business":"لبنیات","plano":"شلف طلایی سطح دید چشم مشتری|فیسینگ کامل اوزان کنار هم|کنترل قیمت‌گذاری و تاریخ انقضا","slogan":"پنیر خامه‌ای نرم و لطیف برای صبحانه و آشپزی","claims":"طعمی لطیف و متعادل برای هر ذائقه|هم برای صبحانه هم آشپزی دیپ و سالاد|کیفیت تضمین‌شده کاله انتخاب اقتصادی و مطمئن","image":"https://kalleh.com/wp-content/uploads/2021/09/%D9%88%DB%8C%D9%84%DB%8C-100-300x300.png.webp","weights":"۱۰۰ گرم | ۲۰۰ گرم | ۳۵۰ گرم | ۱ کیلوگرم","title":"پنیر خامه‌ای ویلی کاله","ingredients":"شیر و خامه پاستوریزه، استارتر مزوفیل، قوام‌دهنده، مایه پنیر، نمک تصفیه شده خوراکی","competitor":"رامک/صباح؛ مزیت کاله: بافت یکدست و عدم آب‌انداختگی","negotiation":"پیشنهاد چیدمان «پله‌ای» از ۱۰۰ تا ۳۵۰ برای افزایش سبد خرید|روی گردش بالا در صبحانه و تکرار خرید خانوار تاکید کنید|برای فروشگاه: ۲ فیس ۱۰۰/۲۰۰ به‌عنوان SKU لیدر و ۱ فیس ۳۵۰ برای آپ‌سل|در صورت اعتراض به قیمت: مقایسه را روی کیفیت بافت و عدم آب‌اندازی بعد از باز شدن ببرید","protein":"2.4","targets":"خانواده‌ها (صبحانه روزانه)|جوانان و شاغلین (میان‌وعده سریع)|مصرف‌کنندگان آشپزی خانگی (دیپ/سالاد/ساندویچ)","shelf_life":"180 روز","sampling":"با کراکر ساده یا خیار خردشده تست شود|سوال قلاب: بافت کرمی و متعادلش رو چطور می‌بینید؟","tips":"روی بافت نرم و قابلیت مالش آسان تأکید کنید|طعم ملایم و کم‌نمک را یادآوری کنید|برای مصرف چندمنظوره مثال بزنید","category_name":"پنیر","energy":"81.06","fat":"7.5","sku":"TEMP1","sugar":"0.99"},{"salt":"0.18","id":"2","category_id":"30","business":"بستنی","plano":"جایگاه دید مستقیم در فریزر|تفکیک از طعم‌های تکراری|کنترل دمای فریزر حداقل منفی ۱۸","slogan":"ترکیب اصیل ارده کنجد و رگه‌های شیره خرمای طبیعی بدون اسانس","claims":"بدون اسانس مصنوعی با مواد طبیعی|طعم اصیل و انرژی‌بخش مناسب تمام سنین|انتخاب متفاوت حتی برای فصل‌های سرد","image":"https://kalleh.com/wp-content/uploads/2025/01/%D8%A8%D8%B3%D8%AA%D9%86%DB%8C-%D8%A7%D8%B1%D8%AF%D9%87-%D8%B4%DB%8C%D8%B1%D9%87-%D8%AE%D8%B1%D9%85%D8%A7.png.webp","weights":"۲۸۰ گرم","title":"بستنی ارده شیره خرما کاله","ingredients":"شیر تازه گاو (بدون چربی)، شکر، ارده کنجد، کره، گلوکز مایع، شیر خشک بدون چربی، پروتئین آب پنیر، مواد پایدارکننده، رنگ طبیعی خوراکی، شیره خرما","competitor":"میهن/دومینو؛ مزیت کاله: مواد پایه واقعی و طعم اصیل","negotiation":"ورود با «فیس کم» شروع کنید: ۱ یا ۲ فیس برای تست فروش|مقایسه را به جای «رژیمی»، روی «طعم خاص/بدون اسانس» ببرید|برای افزایش فروش زمستانه پیشنهاد «دسر بعد غذا» و خرید خانوادگی را مطرح کنید|اگر فریزر جا ندارد: جایگزینی با یک SKU کم‌گردش و وعده بازبینی فروش ۷ روزه بدهید","protein":"","targets":"علاقه‌مندان به طعم‌های سنتی و ایرانی|خانواده‌ها (دسر و پذیرایی)|افراد ماجراجو در طعم (تجربه طعم جدید در فریزر)","shelf_life":"18 ماه","sampling":"تست به صورت لقمه‌های کوچک|سوال قلاب: ترکیب ارده و شیره خرما رو چطور می‌پسندید؟","tips":"روی طبیعی بودن ارده و شیره خرما مانور دهید|به تمایز طعمی در فریزر اشاره کنید|برای فروش زمستانه به عنوان دسر پیشنهاد دهید","category_name":"پریمیوم","energy":"264","fat":"12.4","sku":"TEMP2","sugar":"22.8"},{"salt":"0.03","id":"3","category_id":"5","business":"لبنیات","plano":"قرارگیری کنار اسپریدها|فیسینگ کامل|تمیزی شیشه و یکدست بودن چیدمان","slogan":"اسپرید لوکس با طعم طبیعی پسته و بافت کرمی مناسب صبحانه و دسر","claims":"طعم طبیعی پسته در بافت مخملی|تهیه‌شده از خامه و شیر پاستوریزه|پروتئین ۸.۳٪ برای انرژی و سیری بیشتر","image":"https://kalleh.com/wp-content/uploads/2025/11/کرم-صبحانه-پسته-کاتلا.png","weights":"(نامشخص)","title":"کرم صبحانه پسته‌ای کاتلا","ingredients":"خامه پاستوریزه ۳۵٪ چربی، خمیر پسته، مالتودکسترین، شربت گلوکز، شیر خشک بدون چربی، شکر، شیر پاستوریزه ۳٪ چربی","competitor":"فرمند/شونیز/وارداتی‌ها؛ مزیت کاله: پایه لبنی واقعی و طعم طبیعی‌تر","negotiation":"اسپرید «پریمیوم» است: کنار نوتلا/کرم‌های لوکس بچینید تا مقایسه قیمتی منطقی شود|پیشنهاد فروش جفتی: «کرم + نان تست/ویفر/کراکر» برای بالا بردن میانگین فاکتور|برای جذب خریدار: تست قاشقی کوچک یا تخفیف اولین خرید (در صورت امکان)|اگر فروشگاه حساس به خواب سرمایه است: ابتدا ۳-۶ عدد برای تست و تسویه در خرید بعدی پیشنهاد دهید","protein":"2.49","targets":"خانواده‌ها و نوجوانان (صبحانه و میان‌وعده)|علاقه‌مندان به طعم پسته و محصولات لوکس|هوم‌بیکرها/قنادها/کافه‌ها (فیلینگ و تاپینگ)","shelf_life":"9 ماه","sampling":"روی نان تست یا کراکر ساده تست شود|سوال قلاب: عطر پسته و بافتش رو چطور ارزیابی می‌کنید؟","tips":"روی بافت یکنواخت و قابلیت پخش آسان تأکید کنید|کاربرد دوگانه صبحانه/دسر را بگویید|مقایسه کیفی بدون تخریب رقبا","category_name":"کاتلا","energy":"120","fat":"6","sku":"TEMP3","sugar":"8.36"},{"salt":"2.01","id":"4","category_id":"9","business":"نوشیدنی","plano":"قرارگیری در یخچال نوشیدنی در سطح دید مشتری|چیدمان کنار دوغ‌های خانواده و نوشیدنی‌های لبنی|کنترل دمای یخچال و نمایش رو به جلوی لیبل|قرارگیری نزدیک محصولات کباب و غذای آماده در صورت امکان","slogan":"دوغ گازدار سنتی با طعمی خنک و دلپذیر برای دورهمی‌ها و همراهی با غذا","claims":"طعم سنتی و گازدار برای تجربه‌ای خنک و دلچسب|همراه مناسب کباب غذاهای ایرانی و دورهمی‌ها|بسته‌بندی یک لیتری مناسب مصرف خانوادگی و پذیرایی","image":"https://kalleh.com/wp-content/uploads/2024/11/%D8%AF%D9%88%D8%BA-%DA%AF%D8%A7%D8%B2%D8%AF%D8%A7%D8%B1-%D8%B3%D9%86%D8%AA%DB%8C-%D8%B4%D9%85%D8%B1%D9%88%D9%86.png.webp","weights":"۱۰۰۰ سی‌سی","title":"دوغ گازدار سنتی شمرون","ingredients":"شیر پاستوریزه ۱٪ چربی، نمک تصفیه‌شده خوراکی ۰.۸٪، خامه پاستوریزه ۳۵٪ چربی، گاز کربن‌دی‌اکسید، استارتر ترموفیل، آب آشامیدنی","competitor":"رقبا: دوغ‌های گازدار میهن و عالیس؛ مزیت شمرون: طعم سنتی و جایگاه مناسب برای دورهمی و غذای ایرانی","negotiation":"پیشنهاد شروع با ۳ تا ۶ بطری برای تست گردش محصول|روی مصرف همراه کباب و غذای ایرانی برای افزایش دفعات خرید تأکید کنید|پیشنهاد چیدمان در کنار محصولات مناسب دورهمی و غذای آماده|در صورت محدودیت فضا، درخواست یک یخچال‌چین یا یک ردیف کوچک با بازبینی فروش هفتگی بدهید|برای افزایش تعداد خرید، فروش محصول به‌صورت چندتایی برای مهمانی و مصرف خانوادگی پیشنهاد شود","protein":"0","targets":"خانواده‌ها و گروه‌های دوستانه|مصرف‌کنندگان غذاهای ایرانی و کباب|مشتریان علاقه‌مند به نوشیدنی‌های سنتی و گازدار","shelf_life":"4 ماه","sampling":"محصول کاملاً خنک سرو شود|در صورت امکان همراه غذای ایرانی یا لقمه کوچک تست شود|سوال قلاب: گاز و طعم سنتی دوغ شمرون را در کنار غذا چطور می‌بینید؟","tips":"روی همراهی محصول با کباب و غذاهای ایرانی تأکید کنید|خنک بودن و مناسب بودن برای دورهمی را یادآوری کنید|بطری یک لیتری را به‌عنوان گزینه مناسب مصرف خانوادگی معرفی کنید","category_name":"دوغ","energy":"24","fat":"0.72","sku":"TEMP4","sugar":"1.5"},{"salt":"1.5","id":"5","category_id":"24","business":"سلامت","plano":"قرارگیری در یخچال محصولات پروتئینی و کالباس|چیدمان کنار کالباس‌های گوشت قرمز و محصولات بدون گلوتن|نمایش واضح عبارت بدون گلوتن روی بسته‌بندی|کنترل تاریخ انقضا و شرایط زنجیره سرد|فیسینگ رو به جلو و جلوگیری از فشار یا آسیب به بسته","slogan":"کالباس گوشت قرمز بدون گلوتن با ۵۵ درصد گوشت برای ساندویچ و میان‌وعده","claims":"تهیه‌شده با ۵۵ درصد گوشت قرمز|بدون گلوتن و مناسب افراد حساس به گلوتن طبق اطلاعات محصول|طعم ادویه‌ای و کاربرد آسان برای ساندویچ و میان‌وعده","image":"https://kalleh.com/wp-content/uploads/2024/10/%DA%A9%D8%A7%D9%84%D8%A8%D8%A7%D8%B3-%DA%AF%D9%88%D8%B4%D8%AA-%D9%82%D8%B1%D9%85%D8%B2-%D8%A8%D8%AF%D9%88%D9%86-%DA%AF%D9%84%D9%88%D8%AA%D9%86-%D8%B3%D9%84%DB%8C%D9%86%D9%88.png.webp","weights":"۵۰۰ گرم","title":"کالباس گوشت قرمز بدون گلوتن سلینو","ingredients":"گوشت قرمز ۵۵٪، روغن آفتابگردان، هویج تازه، فلفل دلمه، کازئینات سدیم، پودر سفیده تخم‌مرغ، فیبر سیب‌زمینی، نمک، ادویه‌جات، سیر، پیاز، دود مایع، پلی‌فسفات سدیم، آنتی‌اکسیدان، نگهدارنده، آب آشامیدنی","competitor":"رقبا: کالباس‌های گوشت قرمز و محصولات بدون گلوتن؛ مزیت سلینو: فرمولاسیون بدون گلوتن و ۵۵ درصد گوشت","negotiation":"برای شروع، سفارش محدود ۲ تا ۴ بسته و بازبینی گردش در یک هفته پیشنهاد شود|روی جذب مشتریان جدیدی که محصولات بدون گلوتن می‌خواهند تمرکز کنید|پیشنهاد چیدمان کنار محصولات سلامت‌محور و کالباس‌های گوشت قرمز بدهید|برای کاهش ریسک خواب سرمایه، فروش آزمایشی و ثبت بازخورد مشتری پیشنهاد شود|در صورت اعتراض به قیمت، گفتگو را بر تمایز محصول و دسترسی محدود به گزینه‌های بدون گلوتن متمرکز کنید","protein":"13","targets":"خانواده‌ها و مصرف‌کنندگان ساندویچ خانگی|افراد مبتلا به سلیاک یا دنبال‌کننده محصولات بدون گلوتن|فروشگاه‌ها و مشتریان علاقه‌مند به محصولات گوشتی نوآورانه","shelf_life":"6 ماه","sampling":"تست همراه نان یا کراکر دارای برچسب بدون گلوتن انجام شود|در صورت ارائه نمونه برای مشتری حساس، ترکیبات و هشدار آلرژن بررسی شود|سوال قلاب: طعم ادویه‌ای و بافت محصول را برای ساندویچ چطور می‌پسندید؟","tips":"روی بدون گلوتن بودن و ۵۵ درصد گوشت تأکید کنید|محصول را به‌عنوان غذای رژیمی یا درمانی معرفی نکنید|به کاربرد آن در ساندویچ پیک‌نیک و میان‌وعده اشاره کنید|ادعاهای مربوط به سلیاک فقط بر اساس برچسب و تأیید رسمی محصول بیان شود","category_name":"سلینو","energy":"227","fat":"18.2","sku":"TEMP5","sugar":"1.22"},{"salt":"0.38","id":"6","category_id":"36","business":"غذای آماده","plano":"قرارگیری در شلف سس‌ها در سطح دید مشتری|چیدمان کنار مایونز و سس‌های سالاد|نمایش رو به جلوی عبارت بدون چربی|فیسینگ کامل بسته ۸۰۰ گرمی و کنترل تمیزی بسته‌بندی|قرارگیری نزدیک محصولات سالاد و غذای آماده در صورت امکان","slogan":"سس مایونز بدون چربی با طعم لذیذ برای سالاد و انواع غذا","claims":"بدون چربی طبق اطلاعات تغذیه‌ای محصول|تنها ۴ کالری در هر ۱۵ گرم|مناسب استفاده در کنار سالاد و غذا بدون حذف طعم مایونز","image":"https://kalleh.com/wp-content/uploads/2019/06/%D9%85%D8%A7%DB%8C%D9%88%D9%86%D8%B2-%D8%B2%DB%8C%D8%B1%D9%88.png.webp","weights":"۸۰۰ گرم","title":"سس مایونز بدون چربی کاله","ingredients":"پودر زرده تخم‌مرغ، شکر، سرکه، پودر خردل، پودر سیر، عصاره لیمو، نمک","competitor":"رقبا: مایونزهای کم‌چرب و بدون چربی موجود در بازار؛ مزیت کاله: طعم مایونز با چربی صفر و کالری پایین در هر وعده","negotiation":"پیشنهاد سفارش اولیه با تعداد محدود و مقایسه فروش با مایونز معمولی|روی جذب مشتریان سالاد و مشتریان حساس به میزان چربی تمرکز کنید|برای افزایش سبد خرید، چیدمان کنار سبزیجات آماده، سالاد و نان ساندویچی پیشنهاد شود|در صورت نگرانی از فروش، اجرای تست یک‌هفته‌ای با یک یا دو فیسینگ پیشنهاد دهید|در پاسخ به اعتراض درباره طعم، نمونه‌چشانی و تجربه مستقیم مشتری را مبنای مذاکره قرار دهید","protein":"","targets":"خانواده‌ها و مصرف‌کنندگان سالاد|افرادی که به دنبال کاهش دریافت چربی هستند|مصرف‌کنندگان سس برای ساندویچ و غذاهای خانگی","shelf_life":"6 ماه","sampling":"تست همراه سبزیجات خام، سالاد یا تکه کوچک ساندویچ|سوال قلاب: طعم سس بدون چربی را در کنار سالاد چطور ارزیابی می‌کنید؟|نمونه با مقدار کنترل‌شده سرو شود","tips":"روی صفر بودن چربی و کالری پایین در مقدار مصرف تأکید کنید|محصول را بدون هماهنگ کردن با ادعاهای رسمی، رژیمی یا مناسب همه افراد معرفی نکنید|کاربرد محصول در سالاد و ساندویچ را توضیح دهید|به مشتری پیشنهاد کنید محصول را ابتدا در کنار سالاد یا ساندویچ امتحان کند","category_name":"سس","energy":"4","fat":"0","sku":"TEMP6","sugar":"1.2"}];
+        const rawCategoryMap = [{"category_id":"1","category_name":"پنیر","business":"لبنیات"},{"category_id":"2","category_name":"آژیل","business":"لبنیات"},{"category_id":"3","category_name":"دسر","business":"لبنیات"},{"category_id":"4","category_name":"چربی","business":"لبنیات"},{"category_id":"5","category_name":"کاتلا","business":"لبنیات"},{"category_id":"6","category_name":"شیر","business":"لبنیات"},{"category_id":"7","category_name":"ماست","business":"لبنیات"},{"category_id":"8","category_name":"CSD_CRB","business":"نوشیدنی"},{"category_id":"9","category_name":"دوغ","business":"نوشیدنی"},{"category_id":"10","category_name":"انرژی زا","business":"نوشیدنی"},{"category_id":"11","category_name":"آبمیوه","business":"نوشیدنی"},{"category_id":"12","category_name":"مالت","business":"نوشیدنی"},{"category_id":"13","category_name":"آب","business":"نوشیدنی"},{"category_id":"14","category_name":"بار","business":"قنادی"},{"category_id":"15","category_name":"شکلات","business":"قنادی"},{"category_id":"16","category_name":"کرم قنادی","business":"قنادی"},{"category_id":"17","category_name":"آردی قنادی","business":"قنادی"},{"category_id":"18","category_name":"پایه آبی","business":"قنادی"},{"category_id":"19","category_name":"گوشتی کاپو","business":"کاپو"},{"category_id":"20","category_name":"پیتزا","business":"کاپو"},{"category_id":"21","category_name":"اسنک و دیپ","business":"کاپو"},{"category_id":"22","category_name":"غذای آماده","business":"کاپو"},{"category_id":"23","category_name":"تغذیه کودک","business":"سلامت"},{"category_id":"24","category_name":"سلینو","business":"سلامت"},{"category_id":"25","category_name":"قهوه","business":"سلامت"},{"category_id":"26","category_name":"کاله پرو","business":"سلامت"},{"category_id":"27","category_name":"فله","business":"بستنی"},{"category_id":"28","category_name":"اقتصادی","business":"بستنی"},{"category_id":"29","category_name":"کیک دسر انجمادی","business":"بستنی"},{"category_id":"30","category_name":"پریمیوم","business":"بستنی"},{"category_id":"31","category_name":"کنتاکی","business":"غذای آماده"},{"category_id":"32","category_name":"برگر و بیف","business":"غذای آماده"},{"category_id":"33","category_name":"مرغ","business":"غذای آماده"},{"category_id":"34","category_name":"دونر","business":"غذای آماده"},{"category_id":"35","category_name":"سیب زمینی","business":"غذای آماده"},{"category_id":"36","category_name":"سس","business":"غذای آماده"},{"category_id":"37","category_name":"سوسیس و بلونیا","business":"غذای آماده"},{"category_id":"38","category_name":"غذای دریایی","business":"غذای آماده"},{"category_id":"39","category_name":"فینگر فود و اسنک","business":"غذای آماده"},{"category_id":"40","category_name":"سبزیجات","business":"غذای آماده"}];
+
+        // Custom Business Themes
+        const BUSINESS_THEMES = {
+            'dairy': {
+                primary: '#0ea5a8',
+                secondary: '#7ce7e1',
+                glow: 'rgba(14, 165, 168, .22)',
+                gradient: 'linear-gradient(135deg, #0ea5a8 0%, #7ce7e1 100%)'
+            },
+            'beverage': {
+                primary: '#2f8f46',
+                secondary: '#b7e66d',
+                glow: 'rgba(183, 230, 109, .24)',
+                gradient: 'linear-gradient(135deg, #2f8f46 0%, #b7e66d 100%)'
+            },
+            'confectionary': {
+                primary: '#7b4b2a',
+                secondary: '#c58a62',
+                glow: 'rgba(197, 138, 98, .20)',
+                gradient: 'linear-gradient(135deg, #7b4b2a 0%, #c58a62 100%)'
+            },
+            'capo': {
+                primary: '#c89b16',
+                secondary: '#f3d56b',
+                glow: 'rgba(243, 213, 107, .24)',
+                gradient: 'linear-gradient(135deg, #c89b16 0%, #f3d56b 100%)'
+            },
+            'health': {
+                primary: '#143a7b',
+                secondary: '#4f7bd6',
+                glow: 'rgba(79, 123, 214, .22)',
+                gradient: 'linear-gradient(135deg, #143a7b 0%, #4f7bd6 100%)'
+            },
+            'icecream': {
+                primary: '#d74f8f',
+                secondary: '#f1a0c8',
+                glow: 'rgba(241, 160, 200, .22)',
+                gradient: 'linear-gradient(135deg, #d74f8f 0%, #f1a0c8 100%)'
+            },
+            'readymeal': {
+                primary: '#b92a2a',
+                secondary: '#f06c61',
+                glow: 'rgba(240, 108, 97, .22)',
+                gradient: 'linear-gradient(135deg, #b92a2a 0%, #f06c61 100%)'
+            }
+        };
+
+
+        const BIZ_MAP = {
+            'لبنیات': 'dairy',
+            'نوشیدنی': 'beverage',
+            'قنادی': 'confectionary',
+            'کاپو': 'capo',
+            'سلامت': 'health',
+            'بستنی': 'icecream',
+            'غذای آماده': 'readymeal'
+        };
+
+        // 7 Business Units with Icons
+        const BUSINESS_LIST = [
+            { key: 'dairy',         name: 'لبنیات',     icon: '🧀' },
+            { key: 'beverage',      name: 'نوشیدنی',   icon: '🧃' },
+            { key: 'confectionary', name: 'قنادی',     icon: '🍫' },
+            { key: 'capo',          name: 'کاپو',      icon: '🍕' },
+            { key: 'health',        name: 'سلامت',     icon: '🥗' },
+            { key: 'icecream',      name: 'بستنی',     icon: '🍦' },
+            { key: 'readymeal',     name: 'غذای آماده', icon: '🍗' }
+        ];
+
+        // 40 Exact Categories with Icons
+        const CATEGORIES_TAXONOMY = [
+            { id: 1,  business: 'لبنیات',     name: 'پنیر',              icon: '🧀' },
+            { id: 2,  business: 'لبنیات',     name: 'آژیل',              icon: '🥜' },
+            { id: 3,  business: 'لبنیات',     name: 'دسر',               icon: '🍮' },
+            { id: 4,  business: 'لبنیات',     name: 'چربی',              icon: '🧈' },
+            { id: 5,  business: 'لبنیات',     name: 'کاتلا',             icon: '🍯' },
+            { id: 6,  business: 'لبنیات',     name: 'شیر',               icon: '🥛' },
+            { id: 7,  business: 'لبنیات',     name: 'ماست',              icon: '🥣' },
+
+            { id: 8,  business: 'نوشیدنی',   name: 'CSD_CRB',           icon: '🥤' },
+            { id: 9,  business: 'نوشیدنی',   name: 'دوغ',               icon: '🍶' },
+            { id: 10, business: 'نوشیدنی',   name: 'انرژی زا',          icon: '⚡' },
+            { id: 11, business: 'نوشیدنی',   name: 'آبمیوه',            icon: '🧃' },
+            { id: 12, business: 'نوشیدنی',   name: 'مالت',              icon: '🍺' },
+            { id: 13, business: 'نوشیدنی',   name: 'آب',                icon: '💧' },
+
+            { id: 14, business: 'قنادی',     name: 'بار',               icon: '🍫' },
+            { id: 15, business: 'قنادی',     name: 'شکلات',             icon: '🍬' },
+            { id: 16, business: 'قنادی',     name: 'کرم قنادی',         icon: '🧁' },
+            { id: 17, business: 'قنادی',     name: 'آردی قنادی',        icon: '🥐' },
+            { id: 18, business: 'قنادی',     name: 'پایه آبی',          icon: '🍧' },
+
+            { id: 19, business: 'کاپو',      name: 'گوشتی کاپو',        icon: '🥩' },
+            { id: 20, business: 'کاپو',      name: 'پیتزا',              icon: '🍕' },
+            { id: 21, business: 'کاپو',      name: 'اسنک و دیپ',        icon: '🍟' },
+            { id: 22, business: 'کاپو',      name: 'غذای آماده',        icon: '🍲' },
+
+            { id: 23, business: 'سلامت',     name: 'تغذیه کودک',        icon: '🍼' },
+            { id: 24, business: 'سلامت',     name: 'سلینو',             icon: '🌾' },
+            { id: 25, business: 'سلامت',     name: 'قهوه',              icon: '☕' },
+            { id: 26, business: 'سلامت',     name: 'کاله پرو',           icon: '💪' },
+
+            { id: 27, business: 'بستنی',     name: 'فله',               icon: '🍨' },
+            { id: 28, business: 'بستنی',     name: 'اقتصادی',           icon: '🍦' },
+            { id: 29, business: 'بستنی',     name: 'کیک دسر انجمادی',   icon: '🎂' },
+            { id: 30, business: 'بستنی',     name: 'پریمیوم',           icon: '✨' },
+
+            { id: 31, business: 'غذای آماده', name: 'کنتاکی',            icon: '🍗' },
+            { id: 32, business: 'غذای آماده', name: 'برگر و بیف',        icon: '🍔' },
+            { id: 33, business: 'غذای آماده', name: 'مرغ',               icon: '🍖' },
+            { id: 34, business: 'غذای آماده', name: 'دونر',              icon: '🥙' },
+            { id: 35, business: 'غذای آماده', name: 'سیب زمینی',        icon: '🍟' },
+            { id: 36, business: 'غذای آماده', name: 'سس',                icon: '🥫' },
+            { id: 37, business: 'غذای آماده', name: 'سوسیس و بلونیا',   icon: '🌭' },
+            { id: 38, business: 'غذای آماده', name: 'غذای دریایی',      icon: '🐟' },
+            { id: 39, business: 'غذای آماده', name: 'فینگر فود و اسنک', icon: '🌮' },
+            { id: 40, business: 'غذای آماده', name: 'سبزیجات',          icon: '🥦' }
+        ];
+
+        let allProducts = [];
+        let currentProducts = [];
+        let currentIndex = 0;
+        let selectedBusiness = '';
+        let selectedCategory = '';
+        let isSearching = false;
+        let favOnly = false;
+        let favorites = JSON.parse(localStorage.getItem('kalleh_tmr_favs_v2') || '[]');
+
+        function applyTheme(businessName) {
+            const root = document.documentElement;
+            const key = BIZ_MAP[businessName];
+            const theme = BUSINESS_THEMES[key];
+
+            if (theme) {
+                root.style.setProperty('--theme-primary', theme.primary);
+                root.style.setProperty('--theme-secondary', theme.secondary);
+                root.style.setProperty('--theme-glow', theme.glow);
+                root.style.setProperty('--theme-gradient', theme.gradient);
+            } else {
+                root.style.setProperty('--theme-primary', 'var(--app-default-primary)');
+                root.style.setProperty('--theme-secondary', 'var(--app-default-secondary)');
+                root.style.setProperty('--theme-glow', 'var(--app-default-glow)');
+                root.style.setProperty('--theme-gradient', 'linear-gradient(135deg, var(--app-default-primary) 0%, var(--app-default-secondary) 100%)');
+            }
+        }
+
+
+        function splitPipes(val) {
+            return val ? String(val).split('|').map(s => s.trim()).filter(Boolean) : [];
+        }
+
+        function init() {
+            allProducts = (Array.isArray(rawProducts) ? rawProducts : []).map(p => ({
+                ...p,
+                claims: splitPipes(p.claims),
+                targets: splitPipes(p.targets),
+                tips: splitPipes(p.tips),
+                sampling: splitPipes(p.sampling),
+                plano: splitPipes(p.plano)
+            }));
+
+            updateFavBadge();
+            renderBusinesses();
+
+            document.getElementById('globalSearch').addEventListener('input', (e) => {
+                handleSearch(e.target.value.trim());
+            });
+        }
+
+        function switchView(id) {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+        }
+
+        function openHome() {
+            selectedBusiness = '';
+            selectedCategory = '';
+            isSearching = false;
+            applyTheme('');
+            document.getElementById('globalSearch').value = '';
+            renderBusinesses();
+            switchView('viewHome');
+        }
+
+        // Render Home: 7 Business Cards with individual hover accent
+        function renderBusinesses() {
+            const grid = document.getElementById('businessGrid');
+            grid.innerHTML = '';
+
+            BUSINESS_LIST.forEach(b => {
+                const count = allProducts.filter(p => (p.business || '').trim() === b.name).length;
+                const card = document.createElement('div');
+                const theme = BUSINESS_THEMES[b.key];
+                card.className = 'category-card';
+                card.onclick = () => selectBusiness(b.name);
+                
+                // Add business specific color style to icon and hover state
+                card.innerHTML = `
+                    <div class="cat-icon">${b.icon}</div>
+                    <div class="cat-name" style="color:${theme.primary}">${b.name}</div>
+                    <div class="cat-count">${count} محصول</div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        // Render Categories View
+        function selectBusiness(bizName) {
+            selectedBusiness = bizName;
+            applyTheme(bizName);
+            document.getElementById('catBreadcrumb').innerText = bizName;
+            const grid = document.getElementById('categoryGrid');
+            grid.innerHTML = '';
+
+            const subCats = CATEGORIES_TAXONOMY.filter(c => c.business === bizName);
+
+            subCats.forEach(c => {
+                const count = allProducts.filter(p => {
+                    const matchBiz = (p.business || '').trim() === bizName;
+                    const matchCat = (p.category_name || '').trim() === c.name || (p.category_id == c.id);
+                    return matchBiz && matchCat;
+                }).length;
+
+                const card = document.createElement('div');
+                card.className = 'category-card';
+                card.onclick = () => selectCategory(c.name, c.id);
+                card.innerHTML = `
+                    <div class="cat-icon">${c.icon}</div>
+                    <div class="cat-name">${c.name}</div>
+                    <div class="cat-count">${count} محصول</div>
+                `;
+                grid.appendChild(card);
+            });
+
+            switchView('viewCategories');
+        }
+
+        // Render Flashcard View
+        function selectCategory(catName, catId) {
+            selectedCategory = catName;
+            isSearching = false;
+
+            let list = allProducts.filter(p => {
+                const matchBiz = !selectedBusiness || (p.business || '').trim() === selectedBusiness;
+                const matchCat = (p.category_name || '').trim() === catName || (p.category_id == catId);
+                return matchBiz && matchCat;
+            });
+
+            if (favOnly) {
+                list = list.filter(p => favorites.includes(p.id));
+            }
+
+            if (list.length === 0) {
+                document.getElementById('emptyMsg').innerText = `هیچ محصولی در دسته «${catName}» موجود نیست.`;
+                switchView('viewEmpty');
+                return;
+            }
+
+            currentProducts = list;
+            currentIndex = 0;
+            renderCard();
+            switchView('viewFlashcards');
+        }
+
+        function backFromCards() {
+            if (isSearching) {
+                openHome();
+            } else if (selectedBusiness) {
+                selectBusiness(selectedBusiness);
+            } else {
+                openHome();
+            }
+        }
+
+        function renderCard() {
+            document.getElementById('flashcard').classList.remove('flipped');
+            const p = currentProducts[currentIndex];
+            if (!p) return;
+
+            // Apply theme dynamically per product
+            if (p.business) {
+                applyTheme(p.business);
+            }
+
+            document.getElementById('cardCounter').innerText = `${currentIndex + 1} از ${currentProducts.length}`;
+            document.getElementById('productBreadcrumb').innerText = `${p.business || ''} › ${p.category_name || selectedCategory}`;
+
+            const isFav = favorites.includes(p.id);
+            const likeBtn = document.getElementById('likeBtn');
+            likeBtn.innerHTML = isFav ? '❤️' : '🤍';
+            likeBtn.classList.toggle('liked', isFav);
+
+            document.getElementById('f_img').src = p.image || '';
+            document.getElementById('f_title').innerText = p.title || '';
+            document.getElementById('f_slogan').innerText = p.slogan || '';
+            document.getElementById('f_weights').innerText = p.weights || '-';
+
+            document.getElementById('f_claims').innerHTML = (p.claims || []).map(c => `<li>${c}</li>`).join('');
+            document.getElementById('f_targets').innerHTML = (p.targets || []).map(t => `<li>${t}</li>`).join('');
+
+            document.getElementById('b_tips').innerHTML = (p.tips || []).map(t => `<li>${t}</li>`).join('');
+            document.getElementById('b_sampling').innerHTML = (p.sampling || []).map(s => `<li>${s}</li>`).join('');
+            document.getElementById('b_plano').innerHTML = (p.plano || []).map(pl => `<li>${pl}</li>`).join('');
+
+            document.getElementById('b_ingredients').innerText = p.ingredients || '-';
+            document.getElementById('b_competitor').innerText = p.competitor || '-';
+
+            document.getElementById('b_nutrition').innerHTML = `
+                <div class="nutrition-item"><div class="val">${p.energy || '-'}</div><div class="lbl">انرژی</div></div>
+                <div class="nutrition-item"><div class="val">${p.protein ? p.protein + 'g' : '-'}</div><div class="lbl">پروتئین</div></div>
+                <div class="nutrition-item"><div class="val">${p.fat ? p.fat + 'g' : '-'}</div><div class="lbl">چربی</div></div>
+                <div class="nutrition-item"><div class="val">${p.sugar ? p.sugar + 'g' : '-'}</div><div class="lbl">قند</div></div>
+                <div class="nutrition-item"><div class="val">${p.salt ? p.salt + 'g' : '-'}</div><div class="lbl">نمک</div></div>
+                <div class="nutrition-item"><div class="val">${p.shelf_life || '-'}</div><div class="lbl">ماندگاری</div></div>
+            `;
+
+            switchTab('tab-tmr');
+        }
+
+        function flipCard() {
+            document.getElementById('flashcard').classList.toggle('flipped');
+        }
+
+        function nextCard() {
+            if (currentProducts.length <= 1) return;
+            currentIndex = (currentIndex + 1) % currentProducts.length;
+            renderCard();
+        }
+
+        function prevCard() {
+            if (currentProducts.length <= 1) return;
+            currentIndex = (currentIndex - 1 + currentProducts.length) % currentProducts.length;
+            renderCard();
+        }
+
+        function toggleCurrentFav() {
+            const p = currentProducts[currentIndex];
+            if (!p) return;
+            const idx = favorites.indexOf(p.id);
+            if (idx > -1) favorites.splice(idx, 1);
+            else favorites.push(p.id);
+
+            localStorage.setItem('kalleh_tmr_favs_v2', JSON.stringify(favorites));
+            updateFavBadge();
+            renderCard();
+        }
+
+        function toggleFavOnly() {
+            favOnly = !favOnly;
+            document.getElementById('favBtn').classList.toggle('active', favOnly);
+            
+            const q = document.getElementById('globalSearch').value.trim();
+            if (q) handleSearch(q);
+            else if (selectedCategory) selectCategory(selectedCategory);
+            else if (selectedBusiness) selectBusiness(selectedBusiness);
+            else openHome();
+        }
+
+        function updateFavBadge() {
+            document.getElementById('favCount').innerText = favorites.length;
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-panel').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+
+            const btns = document.querySelectorAll('.tab-btn');
+            if (tabId === 'tab-tmr') btns[0].classList.add('active');
+            if (tabId === 'tab-nutrition') btns[1].classList.add('active');
+            if (tabId === 'tab-more') btns[2].classList.add('active');
+        }
+
+        function handleSearch(query) {
+            if (!query) {
+                openHome();
+                return;
+            }
+
+            isSearching = true;
+            const q = query.toLowerCase();
+            let matches = allProducts.filter(p => {
+                const fullText = [p.title, p.sku, p.business, p.category_name, p.slogan, p.ingredients, p.competitor]
+                    .join(' ').toLowerCase();
+                return fullText.includes(q);
+            });
+
+            if (favOnly) matches = matches.filter(p => favorites.includes(p.id));
+
+            if (matches.length === 0) {
+                document.getElementById('emptyMsg').innerText = `نتیجه‌ای برای «${query}» یافت نشد.`;
+                switchView('viewEmpty');
+            } else {
+                currentProducts = matches;
+                currentIndex = 0;
+                renderCard();
+                switchView('viewFlashcards');
+            }
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (!document.getElementById('viewFlashcards').classList.contains('active')) return;
+            if (e.code === 'Space') { e.preventDefault(); flipCard(); }
+            if (e.code === 'ArrowRight' || e.code === 'ArrowDown') nextCard();
+            if (e.code === 'ArrowLeft' || e.code === 'ArrowUp') prevCard();
+        });
+
+        init();
+    </script>
+</body>
+</html>

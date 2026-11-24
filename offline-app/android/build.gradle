@@ -1,0 +1,17 @@
+// Same plugin version and repositories as the Bubblewrap TWA project, so its Gradle cache is reused.
+buildscript {
+    repositories {
+        google()
+        jcenter()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:8.9.1'
+    }
+}
+
+allprojects {
+    repositories {
+        google()
+        jcenter()
+    }
+}

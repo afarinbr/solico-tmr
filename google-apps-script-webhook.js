@@ -34,6 +34,7 @@ function doPost(e) {
     // =========================================================================
     if (data.action === "UPDATE_STATUS" || data.action === "MARK_DONE") {
       var reportIds = data.report_ids || (data.report_id ? [data.report_id] : []);
+      var productIds = (data.product_ids || (data.product_id ? [data.product_id] : [])).map(String);
       var newStatus = data.new_status || "DONE / REPAIRED";
       var note = data.note || "";
       var values = sheet.getDataRange().getValues();
@@ -46,7 +47,12 @@ function doPost(e) {
 
       for (var i = 1; i < values.length; i++) {
         var rowReportId = String(values[i][0]).trim();
-        if (reportIds.indexOf(rowReportId) !== -1) {
+        var rowProductId = String(values[i][3]).trim();
+        
+        var matchesReport = reportIds.indexOf(rowReportId) !== -1;
+        var matchesProduct = productIds.length > 0 && productIds.indexOf(rowProductId) !== -1;
+
+        if (matchesReport || matchesProduct) {
           var rowNum = i + 1;
           // Set Status in Column 3 with prominent green styling
           sheet.getRange(rowNum, 3).setValue(newStatus).setBackground("#dcfce7").setFontColor("#166534");
@@ -54,7 +60,7 @@ function doPost(e) {
           if (note) {
             sheet.getRange(rowNum, 17).setValue(note);
           }
-          updated.push(rowReportId);
+          updated.push(rowReportId || ("ROW-" + rowNum));
         }
       }
 
@@ -185,32 +191,44 @@ function doPost(e) {
 }
 
 function doGet(e) {
-  return ContentService.createTextOutput(JSON.stringify({
-    status: "online",
-    service: "Solico TMR Product Issue Webhook",
-    timestamp: new Date().toISOString()
-  })).setMimeType(ContentService.MimeType.JSON);
-}
+  try {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var sheet = ss.getSheetByName("Reports") || ss.getActiveSheet();
+    var values = sheet.getDataRange().getValues();
+    
+    var totalRows = Math.max(0, values.length - 1);
+    var pendingCount = 0;
+    var doneCount = 0;
+    var otherCount = 0;
 
-/**
- * پاکسازی خودکار گزارش‌های تستی
- * برای اجرا کافی است در ویرایشگر Apps Script این تابع را انتخاب کرده و Run را بزنید
- */
-function deleteTestReports() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var sheet = ss.getSheetByName("Reports") || ss.getActiveSheet();
-  var data = sheet.getDataRange().getValues();
-  var deletedCount = 0;
-
-  // پیمایش از پایین به بالا برای جلوگیری از تغییر اندیس ردیف‌ها
-  for (var i = data.length - 1; i >= 1; i--) {
-    var reportId = String(data[i][0]);
-    if (reportId.indexOf("REP-TEST") !== -1 || reportId.indexOf("REP-179533") !== -1) {
-      sheet.deleteRow(i + 1);
-      deletedCount++;
+    for (var i = 1; i < values.length; i++) {
+      var st = String(values[i][2]).trim();
+      if (st === "DONE / REPAIRED" || st.indexOf("DONE") !== -1 || st.indexOf("APPROVED") !== -1) {
+        doneCount++;
+      } else if (st === "PENDING" || st === "") {
+        pendingCount++;
+      } else {
+        otherCount++;
+      }
     }
-  }
 
-  Logger.log("تعداد ردیف‌های تستی حذف‌شده: " + deletedCount);
-  return deletedCount;
+    return ContentService.createTextOutput(JSON.stringify({
+      status: "online",
+      service: "Solico TMR Product Issue Webhook",
+      timestamp: new Date().toISOString(),
+      stats: {
+        total_reports: totalRows,
+        done_repaired: doneCount,
+        pending: pendingCount,
+        other: otherCount
+      }
+    })).setMimeType(ContentService.MimeType.JSON);
+  } catch (err) {
+    return ContentService.createTextOutput(JSON.stringify({
+      status: "online",
+      service: "Solico TMR Product Issue Webhook",
+      timestamp: new Date().toISOString(),
+      error: err.toString()
+    })).setMimeType(ContentService.MimeType.JSON);
+  }
 }

@@ -1,0 +1,848 @@
+﻿<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>سامانه آموزش تعاملی سولیکو کاله - تم گرادیان و شیشه‌ای پویا</title>
+    <style>
+        @font-face {
+            font-family: 'Vazirmatn';
+            src: url('./css/fonts/Vazirmatn-Regular.ttf') format('truetype');
+            font-weight: 400;
+            font-display: swap;
+        }
+        @font-face {
+            font-family: 'Vazirmatn';
+            src: url('./css/fonts/Vazirmatn-Bold.ttf') format('truetype');
+            font-weight: 700;
+            font-display: swap;
+        }
+        @font-face {
+            font-family: 'Vazirmatn';
+            src: url('./css/fonts/Vazirmatn-Black.ttf') format('truetype');
+            font-weight: 900;
+            font-display: swap;
+        }
+
+        :root {
+            /* Vibrant Modern Palette */
+            --vib-teal: #0d9488;
+            --vib-emerald: #10b981;
+            --vib-purple: #8b5cf6;
+            --vib-pink: #ec4899;
+            --vib-coral: #f43f5e;
+            --vib-amber: #f59e0b;
+            --vib-blue: #3b82f6;
+
+            --app-default-primary: #0284c7;
+            --app-default-secondary: #38bdf8;
+            --app-default-glow: rgba(56, 189, 248, 0.28);
+
+            --theme-primary: var(--app-default-primary);
+            --theme-secondary: var(--app-default-secondary);
+            --theme-glow: var(--app-default-glow);
+            --theme-gradient: linear-gradient(135deg, #0284c7 0%, #06b6d4 50%, #38bdf8 100%);
+
+            --bg-page: #f0fdf4;
+            --bg-mesh: radial-gradient(at 0% 0%, rgba(56, 189, 248, 0.12) 0px, transparent 50%),
+                       radial-gradient(at 100% 0%, rgba(236, 72, 153, 0.1) 0px, transparent 50%),
+                       radial-gradient(at 50% 100%, rgba(16, 185, 129, 0.08) 0px, transparent 50%),
+                       #f8fafc;
+            --surface: #ffffff;
+            --surface-soft: #f1f5f9;
+            --border-color: #e2e8f0;
+            --header-bg: #0f172a;
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --highlight: #f59e0b;
+            --success: #10b981;
+            --radius-lg: 26px;
+            --radius-md: 16px;
+            --radius-sm: 10px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Vazirmatn', system-ui, sans-serif;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        body {
+            background: var(--bg-mesh);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 16px 8px;
+        }
+
+        .app-frame {
+            width: 100%;
+            max-width: 480px;
+            min-height: 92vh;
+            background: rgba(255, 255, 255, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            border-radius: var(--radius-lg);
+            box-shadow: 0 24px 50px rgba(15, 23, 42, 0.12);
+            display: flex;
+            flex-direction: column;
+            padding: 16px 14px;
+            position: relative;
+            backdrop-filter: blur(16px);
+        }
+
+        /* Vibrant Glass Header */
+        .app-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 16px;
+            margin: -16px -14px 14px -14px;
+            background: linear-gradient(135deg, #09132b 0%, #152243 100%);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+            box-shadow: 0 8px 24px rgba(9, 19, 43, 0.25);
+        }
+
+        .brand-container {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .brand-container:hover { transform: scale(1.03); }
+
+        .brand-solico {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            color: #ffffff;
+            padding: 5px 12px;
+            border-radius: 10px;
+            font-size: 0.98rem;
+            font-weight: 800;
+            box-shadow: 0 2px 10px rgba(59, 130, 246, 0.35);
+        }
+
+        .brand-kalleh {
+            color: #ffffff;
+            background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%);
+            padding: 5px 14px;
+            border-radius: 10px;
+            font-size: 1.05rem;
+            font-weight: 900;
+            box-shadow: 0 2px 10px rgba(244, 63, 94, 0.4);
+        }
+
+        .btn-fav-filter {
+            background: rgba(255, 255, 255, 0.12);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            color: #ffffff;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 800;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            backdrop-filter: blur(10px);
+            transition: 0.25s;
+        }
+
+        .btn-fav-filter:hover {
+            background: rgba(255, 255, 255, 0.25);
+            transform: scale(1.05);
+        }
+
+        .btn-fav-filter.active {
+            background: linear-gradient(135deg, #f43f5e 0%, #ec4899 100%);
+            color: #ffffff;
+            border-color: #f43f5e;
+            box-shadow: 0 0 16px rgba(244, 63, 94, 0.6);
+        }
+
+        /* Vibrant Search Bar */
+        .search-box {
+            position: relative;
+            margin-bottom: 14px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 11px 40px 11px 14px;
+            background: #ffffff;
+            border: 1.5px solid var(--border-color);
+            border-radius: var(--radius-md);
+            color: var(--text-primary);
+            font-size: 0.84rem;
+            font-weight: 600;
+            outline: none;
+            transition: all 0.25s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+        }
+
+        .search-input:focus {
+            border-color: var(--theme-primary);
+            box-shadow: 0 0 0 4px var(--theme-glow), 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .search-icon {
+            position: absolute;
+            right: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 0.95rem;
+            color: var(--theme-primary);
+        }
+
+        /* Views */
+        .view-section {
+            display: none;
+            flex-direction: column;
+            flex: 1;
+        }
+        .view-section.active {
+            display: flex;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 14px;
+        }
+
+        .section-header h2 {
+            font-size: 1.2rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .section-header p {
+            font-size: 0.76rem;
+            color: var(--text-secondary);
+            margin-top: 3px;
+        }
+
+        /* Category Grids */
+        .category-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 10px;
+        }
+
+        .category-card {
+            background: #ffffff;
+            border: 1px solid rgba(226, 232, 240, 0.9);
+            border-radius: var(--radius-md);
+            padding: 16px 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            gap: 6px;
+            cursor: pointer;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04);
+            overflow: hidden;
+        }
+
+        .category-card::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--theme-gradient);
+            opacity: 0.7;
+            transition: opacity 0.2s;
+        }
+
+        .category-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--theme-primary);
+            box-shadow: 0 12px 28px var(--theme-glow);
+        }
+        .category-card:hover::before {
+            opacity: 1;
+            height: 5px;
+        }
+
+        .cat-icon {
+            font-size: 2.2rem;
+            line-height: 1;
+            padding: 6px;
+            border-radius: 50%;
+            background: var(--surface-soft);
+            transition: transform 0.25s;
+        }
+        .category-card:hover .cat-icon {
+            transform: scale(1.15) rotate(4deg);
+        }
+
+        .cat-name {
+            font-size: 0.9rem;
+            font-weight: 800;
+            color: var(--text-primary);
+        }
+
+        .cat-count {
+            font-size: 0.68rem;
+            font-weight: 700;
+            color: #ffffff;
+            background: linear-gradient(135deg, #0f172a 0%, #334155 100%);
+            padding: 3px 10px;
+            border-radius: 12px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+        }
+
+        /* Top Navigation */
+        .top-nav-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            gap: 8px;
+        }
+
+        .btn-back {
+            background: #ffffff;
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 7px 14px;
+            border-radius: var(--radius-sm);
+            font-size: 0.78rem;
+            font-weight: 800;
+            cursor: pointer;
+            white-space: nowrap;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+            transition: 0.2s;
+        }
+        .btn-back:hover {
+            border-color: var(--theme-primary);
+            color: var(--theme-primary);
+            transform: translateY(-1px);
+        }
+
+        .breadcrumb {
+            font-size: 0.82rem;
+            color: var(--theme-primary);
+            font-weight: 900;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .counter-badge {
+            font-size: 0.72rem;
+            font-weight: 800;
+            color: #ffffff;
+            background: var(--theme-gradient);
+            padding: 4px 12px;
+            border-radius: 14px;
+            box-shadow: 0 2px 8px var(--theme-glow);
+            white-space: nowrap;
+        }
+
+        /* Flashcard Component */
+        .scene {
+            width: 100%;
+            height: 470px;
+            perspective: 1200px;
+            margin-bottom: 12px;
+        }
+
+        .flashcard {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.55s cubic-bezier(0.34, 1.2, 0.64, 1);
+            border-radius: var(--radius-lg);
+        }
+
+        .flashcard.flipped {
+            transform: rotateY(180deg);
+        }
+
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 110%;
+            backface-visibility: hidden;
+            border-radius: var(--radius-lg);
+            background: #ffffff;
+            border: 1px solid rgba(226, 232, 240, 0.9);
+            box-shadow: 0 16px 36px var(--theme-glow);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Front Hero */
+        .front-hero {
+            background: var(--theme-gradient);
+            color: #ffffff;
+            padding: 14px 10px 12px;
+            border-bottom-left-radius: 20px;
+            border-bottom-right-radius: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            box-shadow: 0 8px 20px var(--theme-glow);
+            transition: background 0.3s ease;
+        }
+
+        .btn-like {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            background: rgba(255, 255, 255, 0.25);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            color: #ffffff;
+            font-size: 1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(6px);
+            transition: 0.25s;
+        }
+        .btn-like:hover { transform: scale(1.15); }
+        .btn-like.liked {
+            background: #ffffff;
+            color: #f43f5e;
+            box-shadow: 0 0 14px rgba(244, 63, 94, 0.6);
+        }
+
+        .product-img-box {
+            width: 200px;
+            height: 150px;
+            padding: 6px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #ffffff;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.16);
+            transition: transform 0.3s ease;
+        }
+        .product-img-box:hover { transform: scale(1.03); }
+
+        .product-img-box img {
+            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            object-position: center;
+        }
+
+        .p-title {
+            font-size: 1.05rem;
+            font-weight: 900;
+            text-align: center;
+            text-shadow: 0 1px 4px rgba(0,0,0,0.2);
+        }
+        .p-slogan {
+            font-size: 0.72rem;
+            opacity: 0.95;
+            text-align: center;
+            font-weight: 600;
+            margin-top: 2px;
+        }
+
+        .front-content {
+            padding: 12px;
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .info-pill {
+            background: linear-gradient(135deg, #f0fdf4 0%, #e0f2fe 100%);
+            border: 1px solid rgba(56, 189, 248, 0.4);
+            padding: 6px 10px;
+            border-radius: var(--radius-sm);
+            font-size: 0.74rem;
+            font-weight: 800;
+            color: #0369a1;
+        }
+
+        .section-box {
+            background: #f8fafc;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            padding: 8px 10px;
+        }
+
+        .section-box-title {
+            font-size: 0.76rem;
+            font-weight: 800;
+            color: var(--theme-primary);
+            margin-bottom: 6px;
+        }
+
+        .claims-ul, .targets-ul {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .claims-ul li {
+            background: #ffffff;
+            border: 1px solid var(--border-color);
+            padding: 6px 10px;
+            border-radius: 8px;
+            font-size: 0.7rem;
+            color: var(--text-primary);
+            line-height: 1.4;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.02);
+        }
+
+        .targets-ul li {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            padding-right: 12px;
+            position: relative;
+            line-height: 1.4;
+        }
+        .targets-ul li::before {
+            content: "✦";
+            color: var(--theme-primary);
+            position: absolute;
+            right: 0;
+            font-size: 0.7rem;
+        }
+
+        /* Back Face */
+        .card-face-back {
+            transform: rotateY(180deg);
+            background: #f8fafc;
+        }
+
+        .back-top {
+            background: var(--theme-gradient);
+            color: #ffffff;
+            padding: 12px;
+            text-align: center;
+            font-size: 0.82rem;
+            font-weight: 900;
+            letter-spacing: 0.3px;
+            box-shadow: 0 4px 12px var(--theme-glow);
+        }
+
+        .back-nav {
+            display: flex;
+            background: #e2e8f0;
+            padding: 4px;
+            gap: 4px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 7px 4px;
+            font-size: 0.72rem;
+            font-weight: 800;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .tab-btn.active {
+            background: #ffffff;
+            color: var(--theme-primary);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .back-scroll {
+            padding: 12px;
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .tab-panel {
+            display: none;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .tab-panel.active { display: flex; }
+
+        .tmr-block {
+            background: #ffffff;
+            border: 1px solid var(--border-color);
+            border-right: 4px solid var(--theme-primary);
+            border-radius: var(--radius-sm);
+            padding: 8px 10px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+        }
+        .tmr-block.gold { border-right-color: var(--highlight); }
+        .tmr-block.green { border-right-color: var(--success); }
+
+        .tmr-block h4 {
+            font-size: 0.76rem;
+            font-weight: 800;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .tmr-block ul {
+            list-style: none;
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            line-height: 1.4;
+        }
+
+        .nutrition-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 6px;
+        }
+
+        .nutrition-item {
+            background: #ffffff;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 6px 4px;
+            text-align: center;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+        }
+        .nutrition-item .val { font-size: 0.82rem; font-weight: 900; color: var(--theme-primary); }
+        .nutrition-item .lbl { font-size: 0.62rem; color: var(--text-secondary); margin-top: 1px; }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            width: 100%;
+            margin-top: 50px;
+        }
+
+        .ctrl-btn {
+            flex: 1;
+            padding: 10px;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-color);
+            background: #ffffff;
+            color: var(--text-primary);
+            font-size: 0.8rem;
+            font-weight: 800;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+            transition: 0.2s;
+        }
+        .ctrl-btn:hover {
+            border-color: var(--theme-primary);
+            color: var(--theme-primary);
+            transform: translateY(-1px);
+        }
+
+        .ctrl-btn.flip {
+            flex: 1.4;
+            background: var(--theme-gradient);
+            border-color: transparent;
+            color: #ffffff;
+            box-shadow: 0 4px 16px var(--theme-glow);
+        }
+        .ctrl-btn.flip:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px var(--theme-glow);
+        }
+
+        .empty-view {
+            text-align: center;
+            padding: 40px 10px;
+            color: var(--text-secondary);
+        }
+
+        .plano-img-container {
+            width: 100%;
+            margin-top: 12px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .plano-img-container img {
+            max-height: 220px;
+            object-fit: contain;
+            background-color: #fafafa;
+            transition: transform 0.2s ease-in-out;
+        }
+        .plano-img-container img:hover {
+            transform: scale(1.02);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-frame" id="appFrame">
+        
+        <!-- Header -->
+        <header class="app-header">
+            <div class="brand-container" onclick="openHome()">
+                <span class="brand-solico">گروه</span>
+                <span class="brand-kalleh">سولیکو</span>
+            </div>
+            <button class="btn-fav-filter" id="favBtn" onclick="toggleFavOnly()">
+                <span id="favCount">0</span> ❤️
+            </button>
+        </header>
+
+        <!-- Search Bar -->
+        <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input type="text" class="search-input" id="globalSearch" placeholder="جستجو در نام، SKU، ویژگی یا دسته‌بندی...">
+        </div>
+
+        <!-- 1. Home View -->
+        <section class="view-section active" id="viewHome">
+            <div class="section-header">
+                <h2>گروه‌های کسب‌وکار</h2>
+                <p>یکی از واحدهای تجاری زیر را انتخاب کنید</p>
+            </div>
+            <div class="category-grid" id="businessGrid"></div>
+        </section>
+
+        <!-- 2. Categories View -->
+        <section class="view-section" id="viewCategories">
+            <div class="top-nav-bar">
+                <button class="btn-back" onclick="openHome()">‹ همه گروه‌ها</button>
+                <div class="breadcrumb" id="catBreadcrumb"></div>
+                <div style="width:20px;"></div>
+            </div>
+            <div class="category-grid" id="categoryGrid"></div>
+        </section>
+
+        <!-- 3. Flashcards View -->
+        <section class="view-section" id="viewFlashcards">
+            <div class="top-nav-bar">
+                <button class="btn-back" id="cardBackBtn" onclick="backFromCards()">‹ دسته‌ها</button>
+                <div class="breadcrumb" id="productBreadcrumb"></div>
+                <div class="counter-badge" id="cardCounter">۱ از ۱</div>
+            </div>
+
+            <div class="scene">
+                <div class="flashcard" id="flashcard">
+                    
+                    <!-- Front -->
+                    <div class="card-face card-face-front">
+                        <div class="front-hero">
+                            <button class="btn-like" id="likeBtn" onclick="toggleCurrentFav()">🤍</button>
+                            <div class="product-img-box">
+                                <img id="f_img" src="" alt="" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'60\' height=\'60\'><text x=\'50%\' y=\'50%\' font-size=\'10\' text-anchor=\'middle\' fill=\'%23888\'>بدون تصویر</text></svg>'">
+                            </div>
+                            <h3 class="p-title" id="f_title"></h3>
+                            <p class="p-slogan" id="f_slogan"></p>
+                        </div>
+
+                        <div class="front-content">
+                            <div class="info-pill">⚖️ اوزان: <span id="f_weights"></span></div>
+                            <div class="section-box">
+                                <div class="section-box-title">✨ جملات کلیدی فروش</div>
+                                <ul class="claims-ul" id="f_claims"></ul>
+                            </div>
+                            <div class="section-box">
+                                <div class="section-box-title">🎯 بازار و مشتریان هدف</div>
+                                <ul class="targets-ul" id="f_targets"></ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Back -->
+                    <div class="card-face card-face-back">
+                        <div class="back-top">اطلاعات فنی و عملیاتی TMR</div>
+                        <div class="back-nav">
+                            <button class="tab-btn active" onclick="switchTab('tab-tmr')">عملیات TMR</button>
+                            <button class="tab-btn" onclick="switchTab('tab-nutrition')">تغذیه</button>
+                            <button class="tab-btn" onclick="switchTab('tab-more')">مذاکرات فروش</button>
+                        </div>
+                        <div class="back-scroll">
+                            <div class="tab-panel active" id="tab-tmr">
+                                <div class="tmr-block green">
+                                    <h4>📌 نکات پرزنت</h4>
+                                    <ul id="b_tips"></ul>
+                                </div>
+                                <div class="tmr-block gold">
+                                    <h4>🥄 سناریوی سمپلینگ</h4>
+                                    <ul id="b_sampling"></ul>
+                                </div>
+                                <div class="tmr-block">
+                                    <h4>📐 چیدمان و شلف</h4>
+                                    <ul id="b_plano"></ul>
+                                    <div class="plano-img-container" id="b_plano_img_container" style="display: none; margin-top: 10px; text-align: center;">
+                                        <img id="b_plano_img" src="" alt="پلانوگرام چیدمان" style="max-width: 100%; height: auto; border-radius: 6px; border: 1px solid #e0e0e0; cursor: pointer;" onclick="window.open(this.src, '_blank')" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="tab-panel" id="tab-nutrition">
+                                <div class="section-box">
+                                    <div class="section-box-title">جدول ارزش تغذیه‌ای</div>
+                                    <div class="nutrition-grid" id="b_nutrition"></div>
+                                </div>
+                                <div class="tmr-block">
+                                    <h4>🥛 ترکیبات اصلی</h4>
+                                    <p id="b_ingredients" style="font-size:0.68rem; color:var(--text-secondary);"></p>
+                                </div>
+                            </div>
+
+                            <div class="tab-panel" id="tab-more">
+                                <div class="tmr-block gold">
+                                    <h4>🛒 مذاکرات فروش</h4>
+                                    <div id="b_negotiation" style="font-size:0.68rem; color:var(--text-secondary); line-height:1.7;"></div>
+                                </div>
+                                <div class="tmr-block gold">
+                                    <h4>⚔️ وضعیت در برابر رقبا</h4>
+                                    <p id="b_competitor" style="font-size:0.68rem; color:var(--text-secondary);"></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Controls -->
+            <div class="controls">
+                <button class="ctrl-btn" onclick="prevCard()">❮ قبلی</button>
+                <button class="ctrl-btn flip" onclick="flipCard()">🔄 چرخش کارت</button>
+                <button class="ctrl-btn" onclick="nextCard()">بعدی ❯</button>
+            </div>
+        </section>
+
+        <!-- 4. Empty State -->
+        <section class="view-section" id="viewEmpty">
+            <div class="empty-view">
+                <h3 style="font-size:1rem; margin-bottom:6px;">موردی یافت نشد</h3>
+                <p style="font-size:0.75rem; margin-bottom:14px;" id="emptyMsg">در این دسته‌بندی فعلاً محصولی ثبت نشده است.</p>
+                <button class="btn-back" onclick="openHome()">بازگشت به خانه</button>
+            </div>
+        </section>
+
+    </div>
+
+    <script src="./js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <system.webServer>
+        <!-- فعال‌سازی MIME Type های استاندارد وب مدرن که معمولاً در IIS خاموش هستند -->
+        <staticContent>
+            <remove fileExtension=".json" />
+            <mimeMap fileExtension=".json" mimeType="application/json; charset=UTF-8" />
+            <remove fileExtension=".webp" />
+            <mimeMap fileExtension=".webp" mimeType="image/webp" />
+            <remove fileExtension=".ttf" />
+            <mimeMap fileExtension=".ttf" mimeType="font/ttf" />
+            <remove fileExtension=".svg" />
+            <mimeMap fileExtension=".svg" mimeType="image/svg+xml" />
+            <remove fileExtension=".enc" />
+            <mimeMap fileExtension=".enc" mimeType="application/octet-stream" />
+        </staticContent>
+
+        <!-- فشرده‌سازی خودکار برای کاهش ۹۰ درصدی مصرف پهنای باند شبکه سازمان -->
+        <urlCompression doStaticCompression="true" doDynamicCompression="true" />
+
+        <!-- تنظیمات امنیتی مقدماتی برای جلوگیری از حملات Clickjacking و Sniffing -->
+        <httpProtocol>
+            <customHeaders>
+                <add name="X-Content-Type-Options" value="nosniff" />
+                <add name="X-Frame-Options" value="SAMEORIGIN" />
+                <add name="Referrer-Policy" value="strict-origin-when-cross-origin" />
+            </customHeaders>
+        </httpProtocol>
+    </system.webServer>
+</configuration>
