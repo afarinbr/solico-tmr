@@ -1,4 +1,4 @@
-const CACHE_NAME = 'tmr-app-v30';
+const CACHE_NAME = 'tmr-app-v31-capo-upgrade';
 
 const ASSETS_TO_CACHE = [
   './',

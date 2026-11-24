@@ -21,7 +21,7 @@
   },
   {
     "category_id": "5",
-    "category_name": "کاطلا",
+    "category_name": "کاتلا",
     "business": "لبنیات"
   },
   {
@@ -101,12 +101,12 @@
   },
   {
     "category_id": "21",
-    "category_name": "اسنک و دیپ",
+    "category_name": "ساندویچ",
     "business": "کاپو"
   },
   {
     "category_id": "22",
-    "category_name": "غذای آماده",
+    "category_name": "نان پیتزا",
     "business": "کاپو"
   },
   {
@@ -198,5 +198,35 @@
     "category_id": "40",
     "category_name": "سبزیجات",
     "business": "غذای آماده"
+  },
+  {
+    "category_id": "41",
+    "category_name": "لبنیات عمومی",
+    "business": "لبنیات"
+  },
+  {
+    "category_id": "42",
+    "category_name": "خمیر آشپزی و شیرینی",
+    "business": "کاپو"
+  },
+  {
+    "category_id": "43",
+    "category_name": "خمیر پیراشکی",
+    "business": "کاپو"
+  },
+  {
+    "category_id": "44",
+    "category_name": "دیپ و حمص",
+    "business": "کاپو"
+  },
+  {
+    "category_id": "45",
+    "category_name": "سالاد الویه",
+    "business": "کاپو"
+  },
+  {
+    "category_id": "46",
+    "category_name": "اسنک و تنقلات",
+    "business": "کاپو"
   }
 ]

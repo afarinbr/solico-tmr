@@ -1,4 +1,4 @@
-const rawCategoryMap = [{"category_id": "1", "category_name": "پنیر", "business": "لبنیات"}, {"category_id": "2", "category_name": "آژیل", "business": "لبنیات"}, {"category_id": "3", "category_name": "دسر", "business": "لبنیات"}, {"category_id": "4", "category_name": "چربی", "business": "لبنیات"}, {"category_id": "5", "category_name": "کاطلا", "business": "لبنیات"}, {"category_id": "6", "category_name": "شیر", "business": "لبنیات"}, {"category_id": "7", "category_name": "ماست", "business": "لبنیات"}, {"category_id": "8", "category_name": "CSD_CRB", "business": "نوشیدنی"}, {"category_id": "9", "category_name": "دوغ", "business": "نوشیدنی"}, {"category_id": "10", "category_name": "انرژی زا", "business": "نوشیدنی"}, {"category_id": "11", "category_name": "آبمیوه", "business": "نوشیدنی"}, {"category_id": "12", "category_name": "مالت", "business": "نوشیدنی"}, {"category_id": "13", "category_name": "آب", "business": "نوشیدنی"}, {"category_id": "14", "category_name": "بار", "business": "قنادی"}, {"category_id": "15", "category_name": "شکلات", "business": "قنادی"}, {"category_id": "16", "category_name": "کرم قنادی", "business": "قنادی"}, {"category_id": "17", "category_name": "آردی قنادی", "business": "قنادی"}, {"category_id": "18", "category_name": "پایه آبی", "business": "قنادی"}, {"category_id": "19", "category_name": "گوشتی کاپو", "business": "کاپو"}, {"category_id": "20", "category_name": "پیتزا", "business": "کاپو"}, {"category_id": "21", "category_name": "اسنک و دیپ", "business": "کاپو"}, {"category_id": "22", "category_name": "غذای آماده", "business": "کاپو"}, {"category_id": "23", "category_name": "تغذیه کودک", "business": "سلامت"}, {"category_id": "24", "category_name": "سلینو", "business": "سلامت"}, {"category_id": "25", "category_name": "قهوه", "business": "سلامت"}, {"category_id": "26", "category_name": "کاله پرو", "business": "سلامت"}, {"category_id": "27", "category_name": "فله", "business": "بستنی"}, {"category_id": "28", "category_name": "اقتصادی", "business": "بستنی"}, {"category_id": "29", "category_name": "کیک دسر انجمادی", "business": "بستنی"}, {"category_id": "30", "category_name": "پریمیوم", "business": "بستنی"}, {"category_id": "31", "category_name": "کنتاکی", "business": "غذای آماده"}, {"category_id": "32", "category_name": "برگر و بیف", "business": "غذای آماده"}, {"category_id": "33", "category_name": "مرغ", "business": "غذای آماده"}, {"category_id": "34", "category_name": "دونر", "business": "غذای آماده"}, {"category_id": "35", "category_name": "سیب زمینی", "business": "غذای آماده"}, {"category_id": "36", "category_name": "سس", "business": "غذای آماده"}, {"category_id": "37", "category_name": "سوسیس و بلونیا", "business": "غذای آماده"}, {"category_id": "38", "category_name": "غذای دریایی", "business": "غذای آماده"}, {"category_id": "39", "category_name": "فینگر فود و اسنک", "business": "غذای آماده"}, {"category_id": "40", "category_name": "سبزیجات", "business": "غذای آماده"}];
+const rawCategoryMap = [{"category_id": "1", "category_name": "پنیر", "business": "لبنیات"}, {"category_id": "2", "category_name": "آژیل", "business": "لبنیات"}, {"category_id": "3", "category_name": "دسر", "business": "لبنیات"}, {"category_id": "4", "category_name": "چربی", "business": "لبنیات"}, {"category_id": "5", "category_name": "کاتلا", "business": "لبنیات"}, {"category_id": "6", "category_name": "شیر", "business": "لبنیات"}, {"category_id": "7", "category_name": "ماست", "business": "لبنیات"}, {"category_id": "8", "category_name": "CSD_CRB", "business": "نوشیدنی"}, {"category_id": "9", "category_name": "دوغ", "business": "نوشیدنی"}, {"category_id": "10", "category_name": "انرژی زا", "business": "نوشیدنی"}, {"category_id": "11", "category_name": "آبمیوه", "business": "نوشیدنی"}, {"category_id": "12", "category_name": "مالت", "business": "نوشیدنی"}, {"category_id": "13", "category_name": "آب", "business": "نوشیدنی"}, {"category_id": "14", "category_name": "بار", "business": "قنادی"}, {"category_id": "15", "category_name": "شکلات", "business": "قنادی"}, {"category_id": "16", "category_name": "کرم قنادی", "business": "قنادی"}, {"category_id": "17", "category_name": "آردی قنادی", "business": "قنادی"}, {"category_id": "18", "category_name": "پایه آبی", "business": "قنادی"}, {"category_id": "19", "category_name": "گوشتی کاپو", "business": "کاپو"}, {"category_id": "20", "category_name": "پیتزا", "business": "کاپو"}, {"category_id": "21", "category_name": "ساندویچ", "business": "کاپو"}, {"category_id": "22", "category_name": "نان پیتزا", "business": "کاپو"}, {"category_id": "23", "category_name": "تغذیه کودک", "business": "سلامت"}, {"category_id": "24", "category_name": "سلینو", "business": "سلامت"}, {"category_id": "25", "category_name": "قهوه", "business": "سلامت"}, {"category_id": "26", "category_name": "کاله پرو", "business": "سلامت"}, {"category_id": "27", "category_name": "فله", "business": "بستنی"}, {"category_id": "28", "category_name": "اقتصادی", "business": "بستنی"}, {"category_id": "29", "category_name": "کیک دسر انجمادی", "business": "بستنی"}, {"category_id": "30", "category_name": "پریمیوم", "business": "بستنی"}, {"category_id": "31", "category_name": "کنتاکی", "business": "غذای آماده"}, {"category_id": "32", "category_name": "برگر و بیف", "business": "غذای آماده"}, {"category_id": "33", "category_name": "مرغ", "business": "غذای آماده"}, {"category_id": "34", "category_name": "دونر", "business": "غذای آماده"}, {"category_id": "35", "category_name": "سیب زمینی", "business": "غذای آماده"}, {"category_id": "36", "category_name": "سس", "business": "غذای آماده"}, {"category_id": "37", "category_name": "سوسیس و بلونیا", "business": "غذای آماده"}, {"category_id": "38", "category_name": "غذای دریایی", "business": "غذای آماده"}, {"category_id": "39", "category_name": "فینگر فود و اسنک", "business": "غذای آماده"}, {"category_id": "40", "category_name": "سبزیجات", "business": "غذای آماده"}, {"category_id": "41", "category_name": "لبنیات عمومی", "business": "لبنیات"}, {"category_id": "42", "category_name": "خمیر آشپزی و شیرینی", "business": "کاپو"}, {"category_id": "43", "category_name": "خمیر پیراشکی", "business": "کاپو"}, {"category_id": "44", "category_name": "دیپ و حمص", "business": "کاپو"}, {"category_id": "45", "category_name": "سالاد الویه", "business": "کاپو"}, {"category_id": "46", "category_name": "اسنک و تنقلات", "business": "کاپو"}];
 
 // Custom Business Themes
 const BUSINESS_THEMES = {
@@ -69,52 +69,52 @@ const BUSINESS_LIST = [
 
 // 40 Exact Categories with Icons
 const CATEGORIES_TAXONOMY = [
-    { id: 1,  business: 'لبنیات',     name: 'پنیر',              icon: '🧀' },
-    { id: 2,  business: 'لبنیات',     name: 'آژیل',              icon: '🥜' },
-    { id: 3,  business: 'لبنیات',     name: 'دسر',               icon: '🍮' },
-    { id: 4,  business: 'لبنیات',     name: 'چربی',              icon: '🧈' },
-    { id: 5,  business: 'لبنیات',     name: 'کاتلا',             icon: '🍯' },
-    { id: 6,  business: 'لبنیات',     name: 'شیر',               icon: '🥛' },
-    { id: 7,  business: 'لبنیات',     name: 'ماست',              icon: '🥣' },
-
-    { id: 8,  business: 'نوشیدنی',   name: 'CSD_CRB',           icon: '🥤' },
-    { id: 9,  business: 'نوشیدنی',   name: 'دوغ',               icon: '🍶' },
-    { id: 10, business: 'نوشیدنی',   name: 'انرژی زا',          icon: '⚡' },
-    { id: 11, business: 'نوشیدنی',   name: 'آبمیوه',            icon: '🧃' },
-    { id: 12, business: 'نوشیدنی',   name: 'مالت',              icon: '🍺' },
-    { id: 13, business: 'نوشیدنی',   name: 'آب',                icon: '💧' },
-
-    { id: 14, business: 'قنادی',     name: 'بار',               icon: '🍫' },
-    { id: 15, business: 'قنادی',     name: 'شکلات',             icon: '🍬' },
-    { id: 16, business: 'قنادی',     name: 'کرم قنادی',         icon: '🧁' },
-    { id: 17, business: 'قنادی',     name: 'آردی قنادی',        icon: '🥐' },
-    { id: 18, business: 'قنادی',     name: 'پایه آبی',          icon: '🍧' },
-
-    { id: 19, business: 'کاپو',      name: 'گوشتی کاپو',        icon: '🥩' },
-    { id: 20, business: 'کاپو',      name: 'پیتزا',              icon: '🍕' },
-    { id: 21, business: 'کاپو',      name: 'اسنک و دیپ',        icon: '🍟' },
-    { id: 22, business: 'کاپو',      name: 'غذای آماده',        icon: '🍲' },
-
-    { id: 23, business: 'سلامت',     name: 'تغذیه کودک',        icon: '🍼' },
-    { id: 24, business: 'سلامت',     name: 'سلینو',             icon: '🌾' },
-    { id: 25, business: 'سلامت',     name: 'قهوه',              icon: '☕' },
-    { id: 26, business: 'سلامت',     name: 'کاله پرو',           icon: '💪' },
-
-    { id: 27, business: 'بستنی',     name: 'فله',               icon: '🍨' },
-    { id: 28, business: 'بستنی',     name: 'اقتصادی',           icon: '🍦' },
-    { id: 29, business: 'بستنی',     name: 'کیک دسر انجمادی',   icon: '🎂' },
-    { id: 30, business: 'بستنی',     name: 'پریمیوم',           icon: '✨' },
-
-    { id: 31, business: 'غذای آماده', name: 'کنتاکی',            icon: '🍗' },
-    { id: 32, business: 'غذای آماده', name: 'برگر و بیف',        icon: '🍔' },
-    { id: 33, business: 'غذای آماده', name: 'مرغ',               icon: '🍖' },
-    { id: 34, business: 'غذای آماده', name: 'دونر',              icon: '🥙' },
-    { id: 35, business: 'غذای آماده', name: 'سیب زمینی',        icon: '🍟' },
-    { id: 36, business: 'غذای آماده', name: 'سس',                icon: '🥫' },
-    { id: 37, business: 'غذای آماده', name: 'سوسیس و بلونیا',   icon: '🌭' },
-    { id: 38, business: 'غذای آماده', name: 'غذای دریایی',      icon: '🐟' },
+    { id: 1, business: 'لبنیات', name: 'پنیر', icon: '🧀' },
+    { id: 2, business: 'لبنیات', name: 'آژیل', icon: '🥜' },
+    { id: 3, business: 'لبنیات', name: 'دسر', icon: '🍮' },
+    { id: 4, business: 'لبنیات', name: 'چربی', icon: '🧈' },
+    { id: 5, business: 'لبنیات', name: 'کاتلا', icon: '🍯' },
+    { id: 6, business: 'لبنیات', name: 'شیر', icon: '🥛' },
+    { id: 7, business: 'لبنیات', name: 'ماست', icon: '🥣' },
+    { id: 8, business: 'نوشیدنی', name: 'CSD_CRB', icon: '🥤' },
+    { id: 9, business: 'نوشیدنی', name: 'دوغ', icon: '🍶' },
+    { id: 10, business: 'نوشیدنی', name: 'انرژی زا', icon: '⚡' },
+    { id: 11, business: 'نوشیدنی', name: 'آبمیوه', icon: '🧃' },
+    { id: 12, business: 'نوشیدنی', name: 'مالت', icon: '🍺' },
+    { id: 13, business: 'نوشیدنی', name: 'آب', icon: '💧' },
+    { id: 14, business: 'قنادی', name: 'بار', icon: '🍫' },
+    { id: 15, business: 'قنادی', name: 'شکلات', icon: '🍬' },
+    { id: 16, business: 'قنادی', name: 'کرم قنادی', icon: '🧁' },
+    { id: 17, business: 'قنادی', name: 'آردی قنادی', icon: '🥐' },
+    { id: 18, business: 'قنادی', name: 'پایه آبی', icon: '🍧' },
+    { id: 19, business: 'کاپو', name: 'گوشتی کاپو', icon: '🥩' },
+    { id: 20, business: 'کاپو', name: 'پیتزا', icon: '🍕' },
+    { id: 21, business: 'کاپو', name: 'ساندویچ', icon: '🥪' },
+    { id: 22, business: 'کاپو', name: 'نان پیتزا', icon: '🫓' },
+    { id: 23, business: 'سلامت', name: 'تغذیه کودک', icon: '🍼' },
+    { id: 24, business: 'سلامت', name: 'سلینو', icon: '🌾' },
+    { id: 25, business: 'سلامت', name: 'قهوه', icon: '☕' },
+    { id: 26, business: 'سلامت', name: 'کاله پرو', icon: '💪' },
+    { id: 27, business: 'بستنی', name: 'فله', icon: '🍨' },
+    { id: 28, business: 'بستنی', name: 'اقتصادی', icon: '🍦' },
+    { id: 29, business: 'بستنی', name: 'کیک دسر انجمادی', icon: '🎂' },
+    { id: 30, business: 'بستنی', name: 'پریمیوم', icon: '✨' },
+    { id: 31, business: 'غذای آماده', name: 'کنتاکی', icon: '🍗' },
+    { id: 32, business: 'غذای آماده', name: 'برگر و بیف', icon: '🍔' },
+    { id: 33, business: 'غذای آماده', name: 'مرغ', icon: '🍖' },
+    { id: 34, business: 'غذای آماده', name: 'دونر', icon: '🥙' },
+    { id: 35, business: 'غذای آماده', name: 'سیب زمینی', icon: '🍟' },
+    { id: 36, business: 'غذای آماده', name: 'سس', icon: '🥫' },
+    { id: 37, business: 'غذای آماده', name: 'سوسیس و بلونیا', icon: '🌭' },
+    { id: 38, business: 'غذای آماده', name: 'غذای دریایی', icon: '🐟' },
     { id: 39, business: 'غذای آماده', name: 'فینگر فود و اسنک', icon: '🌮' },
-    { id: 40, business: 'غذای آماده', name: 'سبزیجات',          icon: '🥦' }
+    { id: 40, business: 'غذای آماده', name: 'سبزیجات', icon: '🥦' },
+    { id: 41, business: 'لبنیات', name: 'لبنیات عمومی', icon: '🥛' },
+    { id: 42, business: 'کاپو', name: 'خمیر آشپزی و شیرینی', icon: '🥐' },
+    { id: 43, business: 'کاپو', name: 'خمیر پیراشکی', icon: '🥟' },
+    { id: 44, business: 'کاپو', name: 'دیپ و حمص', icon: '🫕' },
+    { id: 45, business: 'کاپو', name: 'سالاد الویه', icon: '🥗' },
+    { id: 46, business: 'کاپو', name: 'اسنک و تنقلات', icon: '🍿' },
 ];
 
 window.CATEGORIES_TAXONOMY = CATEGORIES_TAXONOMY;
